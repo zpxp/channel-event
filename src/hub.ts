@@ -5,7 +5,11 @@ import { generatorImplements } from "./generatorImpls";
 export interface Hub {
 	/**
 	 * Create a new channel inside this hub. A channel broadcasts events to all other channels inside the same hub.
-	 * @param id 
+	 * 
+	 * If `id` is specified, then channals can return data in the `Channel.listen` function that will be sent back to the channel
+	 * that called `send`
+	 * 
+	 * @param id An optional channel id. Allows two way event communication
 	 */
 	newChannel(id?: string): Channel;
 

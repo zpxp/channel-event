@@ -23,9 +23,7 @@ export const generatorImplements = {
 	 * @param channel
 	 */
 	put: function(data: EventIterable<{ type: string; data: any }>, channel: Channel): Promise<any> {
-		channel.send(data.value.type, data.value.data);
-
-		return Promise.resolve();
+		return Promise.resolve(channel.send(data.value.type, data.value.data));
 	},
 
 	/**
