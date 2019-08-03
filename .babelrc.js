@@ -11,7 +11,6 @@ module.exports = {
 						}
 					}
 				],
-				"@babel/preset-react",
 				"@babel/preset-typescript"
 			]
 		}
@@ -23,7 +22,6 @@ module.exports = {
 				modules: false
 			}
 		],
-		"@babel/preset-react"
 	],
 	plugins: [
 		[
