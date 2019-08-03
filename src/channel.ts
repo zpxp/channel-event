@@ -31,10 +31,19 @@ export interface Channel<Actions extends { [type: string]: IChannelMessage<any> 
 	onDispose(func: (chan?: Channel<Actions>) => void): void;
 
 	/**
-	 * Run a given generator function. @see {link:}
+	 * Run a given generator function.
+	 * 
+	 * @see https://github.com/zpxp/channel-event/blob/v1/src/generator.ts 
+	 * @see https://github.com/zpxp/channel-event/blob/v1/src/__tests__/events.ts#L102
 	 * @param generatorFunc 
 	 */
 	runGenerator(generatorFunc: () => IterableIterator<EventIterable>): void;
+
+	/**
+	 * Run a given generator function and call `onCompletion` when the function returns
+	 * @param generatorFunc 		
+	 * @param onCompletion 
+	 */
 	runGenerator(generatorFunc: () => IterableIterator<EventIterable>, onCompletion?: (result?: any) => void): void;
 
 	dispose(): void;
@@ -118,6 +127,7 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 		for (let index = 0; index < this.runningGeneratorProms.length; index++) {
 			const prom = this.runningGeneratorProms[index];
 			if (prom instanceof ManualPromise) {
+				// if its a manual prom we can cancel it
 				prom.reject();
 			}
 		}
