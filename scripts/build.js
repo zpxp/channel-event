@@ -84,9 +84,6 @@ function build() {
 				return reject(new Error(messages.errors.join("\n\n")));
 			}
 
-			fs.copyFileSync(path.join(paths.appSrc, "promise.d.ts"), path.join(paths.appBuildLib, "promise.d.ts"));
-			fs.copyFileSync(path.join(paths.appSrc, "promise.d.ts"), path.join(paths.appBuildDist, "promise.d.ts"));
-
 			const resolveArgs = {
 				stats,
 				warnings: messages.warnings
