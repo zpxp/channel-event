@@ -26,23 +26,23 @@ export interface Channel<Actions extends { [type: string]: IChannelMessage<any> 
 
 	/**
 	 * Add a listener to this channels disposal and call `func` just before being disposed
-	 * @param func 
+	 * @param func
 	 */
 	onDispose(func: (chan?: Channel<Actions>) => void): void;
 
 	/**
 	 * Run a given generator function.
-	 * 
-	 * @see https://github.com/zpxp/channel-event/blob/v1/src/generator.ts 
+	 *
+	 * @see https://github.com/zpxp/channel-event/blob/v1/src/generator.ts
 	 * @see https://github.com/zpxp/channel-event/blob/v1/src/__tests__/events.ts#L102
-	 * @param generatorFunc 
+	 * @param generatorFunc
 	 */
 	runGenerator(generatorFunc: () => IterableIterator<EventIterable>): void;
 
 	/**
 	 * Run a given generator function and call `onCompletion` when the function returns
-	 * @param generatorFunc 		
-	 * @param onCompletion 
+	 * @param generatorFunc
+	 * @param onCompletion
 	 */
 	runGenerator(generatorFunc: () => IterableIterator<EventIterable>, onCompletion?: (result?: any) => void): void;
 
@@ -172,7 +172,7 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 				);
 			}
 
-			const value = this.processEventIterable(result.value.function, 0, result.value);
+			const value = this.processEventIterable(result.value.function, 0, result.value, result.value.value);
 
 			if (value instanceof Promise) {
 				this.runningGeneratorProms.push(value);
@@ -185,7 +185,7 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 							this.runningGeneratorProms.splice(index, 1);
 						}
 						if (!cancelled && !this.disposed) {
-							this.processIterator(iter, data, onCompletion);
+							this.processIterator(iter, data.value, onCompletion);
 						}
 					},
 					err => {
@@ -206,27 +206,27 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 		}
 	}
 
-	processEventIterable(
-		functionName: string,
-		index: number,
-		val: EventIterable | Promise<EventIterable>
-	): EventIterable | Promise<EventIterable> {
-		if (val instanceof Promise) {
-			return val.then(data => {
-				return this.processEventIterable(functionName, index + 1, data);
+	processEventIterable(functionName: string, index: number, iterable: EventIterable, data: any): EventIterable | Promise<EventIterable> {
+		if (data instanceof Promise) {
+			return data.then(data => {
+				iterable.value = data;
+				return this.processEventIterable(functionName, index + 1, iterable, data);
 			});
 		}
 
 		for (; index < this.hub.generatorMiddlewares[functionName].length; index++) {
 			const func = this.hub.generatorMiddlewares[functionName][index];
-			val = func(val, this as Channel);
-			if (val instanceof Promise) {
-				return val.then(data => {
-					return this.processEventIterable(functionName, index + 1, data);
+			data = func({ ...iterable }, this as Channel);
+			if (data instanceof Promise) {
+				return data.then(data => {
+					iterable.value = data;
+					return this.processEventIterable(functionName, index + 1, iterable, data);
 				});
+			} else {
+				iterable.value = data;
 			}
 		}
-		return val;
+		return iterable;
 	}
 }
 

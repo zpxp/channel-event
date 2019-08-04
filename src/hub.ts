@@ -21,7 +21,7 @@ export interface Hub {
 	 * @param functionName The name of this generator middleware to be added
 	 * @param middleware The middleware implementation that takes 1-2 args: The `EventIterable` that was yielded, in the generator, and a reference to the `Channel` object
 	 */
-	addGeneratorMiddleware(functionName: string, middleware: (args: EventIterable, channel?: Channel) => Promise<EventIterable>): void;
+	addGeneratorMiddleware(functionName: string, middleware: (args: EventIterable, channel?: Channel) => Promise<any>): void;
 
 	/**
 	 * A static instance of a `Channel` that sits on this hub
@@ -32,7 +32,7 @@ export interface Hub {
 }
 
 class _HubInternal implements Hub {
-	static generatorMiddlewares: { [name: string]: Array<(args: EventIterable, channel: Channel) => Promise<EventIterable>> } = {};
+	static generatorMiddlewares: { [name: string]: Array<(args: EventIterable, channel: Channel) => Promise<any>> } = {};
 	private _globalChannel: Channel<any>;
 
 	get generatorMiddlewares() {
@@ -87,7 +87,7 @@ class _HubInternal implements Hub {
 
 	static addGeneratorMiddleware(
 		functionName: string,
-		middleware: (args: EventIterable, channel: Channel) => Promise<EventIterable>
+		middleware: (args: EventIterable, channel: Channel) => Promise<any>
 	): void {
 		if (!_HubInternal.generatorMiddlewares[functionName]) {
 			_HubInternal.generatorMiddlewares[functionName] = [];
@@ -96,7 +96,7 @@ class _HubInternal implements Hub {
 		_HubInternal.generatorMiddlewares[functionName].push(middleware);
 	}
 
-	addGeneratorMiddleware(functionName: string, middleware: (args: EventIterable, channel: Channel) => Promise<EventIterable>): void {
+	addGeneratorMiddleware(functionName: string, middleware: (args: EventIterable, channel: Channel) => Promise<any>): void {
 		_HubInternal.addGeneratorMiddleware(functionName, middleware);
 	}
 }
