@@ -4,11 +4,10 @@ import { generatorImplements } from "./generatorImpls";
 import { IHub } from "./IHub";
 import { IChannel } from "./IChannel";
 
-
-
 class _HubInternal implements IHub {
 	static generatorMiddlewares: { [name: string]: Array<(args: EventIterable, channel: IChannel) => Promise<any>> } = {};
 	private _globalChannel: IChannel<any>;
+	private readonly options: { enableLogging?: boolean };
 
 	get generatorMiddlewares() {
 		return _HubInternal.generatorMiddlewares;
@@ -22,7 +21,8 @@ class _HubInternal implements IHub {
 		return this._globalChannel;
 	}
 
-	constructor() {
+	constructor(options: CreateHubOptions) {
+		this.options = { ...defaultOptions, ...options };
 		this.channels = [];
 	}
 
@@ -52,6 +52,10 @@ class _HubInternal implements IHub {
 	}
 
 	handleSend(type: string, data: any) {
+		if (this.options.enableLogging) {
+			console.log("%cEvent:" + `%c ${type}`, "color: #0f0;font-weight:bold;", "", data);
+		}
+
 		let returnData = {};
 		for (let index = 0; index < this.channels.length; index++) {
 			const chann = this.channels[index];
@@ -60,10 +64,7 @@ class _HubInternal implements IHub {
 		return returnData;
 	}
 
-	static addGeneratorMiddleware(
-		functionName: string,
-		middleware: (args: EventIterable, channel: IChannel) => Promise<any>
-	): void {
+	static addGeneratorMiddleware(functionName: string, middleware: (args: EventIterable, channel: IChannel) => Promise<any>): void {
 		if (!_HubInternal.generatorMiddlewares[functionName]) {
 			_HubInternal.generatorMiddlewares[functionName] = [];
 		}
@@ -76,8 +77,13 @@ class _HubInternal implements IHub {
 	}
 }
 
-export function createHub(): IHub {
-	const hub = new _HubInternal();
+type CreateHubOptions = {
+	/** Log all send events */
+	enableLogging?: boolean;
+};
+
+export function createHub(options?: CreateHubOptions): IHub {
+	const hub = new _HubInternal(options);
 	return hub as IHub;
 }
 
@@ -91,3 +97,5 @@ for (const key in generatorImplements) {
 		_HubInternal.addGeneratorMiddleware(key, impl);
 	}
 }
+
+const defaultOptions: CreateHubOptions = {};
