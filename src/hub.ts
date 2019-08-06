@@ -1,46 +1,21 @@
-import { Channel, _createChannel, _ChannelInternal } from "./channel";
+import { _createChannel, _ChannelInternal } from "./channel";
 import { EventIterable } from "./generator";
 import { generatorImplements } from "./generatorImpls";
-
-export interface Hub {
-	/**
-	 * Create a new channel inside this hub. A channel broadcasts events to all other channels inside the same hub.
-	 * 
-	 * If `id` is specified, then channals can return data in the `Channel.listen` function that will be sent back to the channel
-	 * that called `send`
-	 * 
-	 * @param id An optional channel id. Allows two way event communication
-	 */
-	newChannel(id?: string): Channel;
+import { IHub } from "./IHub";
+import { IChannel } from "./IChannel";
 
 
-	/**
-	 * Add a custom generator middleware to the event channel generator. Whenever a generator `yield`s an `EventIterable`, the hub will look for
-	 * any middleware whos function name matches the `EventIterable.function`. 
-	 * 
-	 * @param functionName The name of this generator middleware to be added
-	 * @param middleware The middleware implementation that takes 1-2 args: The `EventIterable` that was yielded, in the generator, and a reference to the `Channel` object
-	 */
-	addGeneratorMiddleware(functionName: string, middleware: (args: EventIterable, channel?: Channel) => Promise<any>): void;
 
-	/**
-	 * A static instance of a `Channel` that sits on this hub
-	 */
-	global: Channel;
-
-	dispose(): void;
-}
-
-class _HubInternal implements Hub {
-	static generatorMiddlewares: { [name: string]: Array<(args: EventIterable, channel: Channel) => Promise<any>> } = {};
-	private _globalChannel: Channel<any>;
+class _HubInternal implements IHub {
+	static generatorMiddlewares: { [name: string]: Array<(args: EventIterable, channel: IChannel) => Promise<any>> } = {};
+	private _globalChannel: IChannel<any>;
 
 	get generatorMiddlewares() {
 		return _HubInternal.generatorMiddlewares;
 	}
 	private channels: _ChannelInternal[];
 
-	get global(): Channel {
+	get global(): IChannel {
 		if (!this._globalChannel) {
 			this._globalChannel = this.newChannel();
 		}
@@ -51,7 +26,7 @@ class _HubInternal implements Hub {
 		this.channels = [];
 	}
 
-	newChannel(id?: string): Channel {
+	newChannel(id?: string): IChannel {
 		const chann = _createChannel(this, id);
 
 		this.channels.push(chann);
@@ -87,7 +62,7 @@ class _HubInternal implements Hub {
 
 	static addGeneratorMiddleware(
 		functionName: string,
-		middleware: (args: EventIterable, channel: Channel) => Promise<any>
+		middleware: (args: EventIterable, channel: IChannel) => Promise<any>
 	): void {
 		if (!_HubInternal.generatorMiddlewares[functionName]) {
 			_HubInternal.generatorMiddlewares[functionName] = [];
@@ -96,14 +71,14 @@ class _HubInternal implements Hub {
 		_HubInternal.generatorMiddlewares[functionName].push(middleware);
 	}
 
-	addGeneratorMiddleware(functionName: string, middleware: (args: EventIterable, channel: Channel) => Promise<any>): void {
+	addGeneratorMiddleware(functionName: string, middleware: (args: EventIterable, channel: IChannel) => Promise<any>): void {
 		_HubInternal.addGeneratorMiddleware(functionName, middleware);
 	}
 }
 
-export function createHub(): Hub {
+export function createHub(): IHub {
 	const hub = new _HubInternal();
-	return hub as Hub;
+	return hub as IHub;
 }
 
 export type t_HubInternal = _HubInternal;

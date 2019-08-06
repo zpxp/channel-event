@@ -1,56 +1,11 @@
 import { t_HubInternal as _HubInternal } from "./hub";
 import { EventIterable } from "./generator";
 import { ManualPromise } from "manual-promise";
+import { IChannel } from "./IChannel";
 
-export interface Channel<Actions extends { [type: string]: IChannelMessage<any> } = any> {
-	readonly id: string;
 
-	/**
-	 * Notify all channels in the current `hub` that are listening to `type` event
-	 * @param type Type of event
-	 * @param data Optional data for event
-	 */
-	send<T extends keyof Actions>(type: T, data?: Actions[T]["payload"]): void;
-
-	/**
-	 * Listen to a given `type` of event and call `callback` whenever `type` is sent
-	 * @param type Type of event to listen to
-	 * @param callback Function to call whenever `type` is sent
-	 */
-	listen(type: string, callback: (data?: any) => any): () => void;
-	/**
-	 * Listen to an array of event types
-	 */
-	listen(type: string[], callback: (data?: any) => any): () => void;
-	listen(type: string | string[], callback: (data?: any) => any): () => void;
-
-	/**
-	 * Add a listener to this channels disposal and call `func` just before being disposed
-	 * @param func
-	 */
-	onDispose(func: (chan?: Channel<Actions>) => void): void;
-
-	/**
-	 * Run a given generator function.
-	 *
-	 * @see https://github.com/zpxp/channel-event/blob/v1/src/generator.ts
-	 * @see https://github.com/zpxp/channel-event/blob/v1/src/__tests__/events.ts#L102
-	 * @param generatorFunc
-	 */
-	runGenerator(generatorFunc: () => IterableIterator<EventIterable>): void;
-
-	/**
-	 * Run a given generator function and call `onCompletion` when the function returns
-	 * @param generatorFunc
-	 * @param onCompletion
-	 */
-	runGenerator(generatorFunc: () => IterableIterator<EventIterable>, onCompletion?: (result?: any) => void): void;
-
-	dispose(): void;
-}
-
-export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<any> } = any> implements Channel<Actions> {
-	private onDisposes: Array<(chan?: Channel<Actions>) => void>;
+export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<any> } = any> implements IChannel<Actions> {
+	private onDisposes: Array<(chan?: IChannel<Actions>) => void>;
 	private listens: { [type: string]: Array<(data?: any) => any> };
 	private disposed: boolean;
 	private runningGeneratorProms: Promise<any>[];
@@ -64,12 +19,12 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 		this.id = id;
 	}
 
-	send<T extends keyof Actions>(type: T, data?: Actions[T]["payload"]) {
+	send<T extends keyof Actions>(type: T, data?: Actions[T]) {
 		if (this.disposed) {
 			throw new Error("Channel disposed");
 		}
 
-		const returnData = this.hub.handleSend(type as any, data);
+		const returnData = this.hub.handleSend(type as string, data);
 		return Object.keys(returnData).length ? returnData : null;
 	}
 
@@ -113,7 +68,7 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 		}
 	}
 
-	onDispose(func: (chan?: Channel<Actions>) => void) {
+	onDispose(func: (chan?: IChannel<Actions>) => void) {
 		this.onDisposes.push(func);
 	}
 
@@ -121,7 +76,7 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 		this.disposed = true;
 		for (let i = 0; i < this.onDisposes.length; i++) {
 			const func = this.onDisposes[i];
-			func(this as Channel<Actions>);
+			func(this as IChannel<Actions>);
 		}
 		this.onDisposes = [];
 		for (let index = 0; index < this.runningGeneratorProms.length; index++) {
@@ -216,7 +171,7 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 
 		for (; index < this.hub.generatorMiddlewares[functionName].length; index++) {
 			const func = this.hub.generatorMiddlewares[functionName][index];
-			data = func({ ...iterable }, this as Channel);
+			data = func({ ...iterable }, this as IChannel);
 			if (data instanceof Promise) {
 				return data.then(data => {
 					iterable.value = data;
@@ -230,10 +185,7 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 	}
 }
 
-export interface IChannelMessage<D> {
-	type: string;
-	payload: D;
-}
+export type IChannelMessage<D> = D;
 
 export function _createChannel(hub: _HubInternal, id: string) {
 	return new _ChannelInternal(hub, id);

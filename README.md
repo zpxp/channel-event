@@ -1,10 +1,14 @@
 # channel-event
 
+A simple javascript event channel library that can run generator functions, that allows for async data flows and cross component communication
+
+
+### Installation
+
 `yarn add channel-event`
 
 `npn install channel-event`
 
-A javascript event channel library that can run generator functions `function*` that allows for async data flows and cross component communication
 
 
 ### Generator actions

@@ -1,6 +1,7 @@
 import { EventIterable, take, call, fork, takeEvery } from "./generator";
-import { Channel, _ChannelInternal as tChannel } from "./channel";
+import { _ChannelInternal as tChannel } from "./channel";
 import { GeneratorUtils } from "./utils";
+import { IChannel } from "./IChannel";
 
 export const generatorImplements = {
 	/**
@@ -8,7 +9,7 @@ export const generatorImplements = {
 	 * @param data the string type or types to wait on
 	 * @param channel
 	 */
-	take: function(data: EventIterable<string | string[]>, channel: Channel): Promise<any> {
+	take: function(data: EventIterable<string | string[]>, channel: IChannel): Promise<any> {
 		return new Promise(resolve => {
 			const unsub = channel.listen(data.value, result => {
 				unsub();
@@ -22,7 +23,7 @@ export const generatorImplements = {
 	 * @param data action type and data to send
 	 * @param channel
 	 */
-	put: function(data: EventIterable<{ type: string; data: any }>, channel: Channel): Promise<any> {
+	put: function(data: EventIterable<{ type: string; data: any }>, channel: IChannel): Promise<any> {
 		return Promise.resolve(channel.send(data.value.type, data.value.data));
 	},
 
@@ -69,7 +70,7 @@ export const generatorImplements = {
 		});
 	},
 
-	delay: function(data: EventIterable<number>, channel: Channel): Promise<never> {
+	delay: function(data: EventIterable<number>, channel: IChannel): Promise<never> {
 		return new Promise(resolve => {
 			setTimeout(() => {
 				resolve();
@@ -79,7 +80,7 @@ export const generatorImplements = {
 
 	takeLatest: function(
 		data: EventIterable<{ type: string | string[]; func: (data: any) => void | IterableIterator<EventIterable> }>,
-		channel: Channel
+		channel: IChannel
 	): Promise<any> {
 		channel.runGenerator(function*() {
 			let cancel = null;
@@ -98,7 +99,7 @@ export const generatorImplements = {
 
 	takeEvery: function(
 		data: EventIterable<{ type: string | string[]; func: (data: any) => void | IterableIterator<EventIterable> }>,
-		channel: Channel
+		channel: IChannel
 	): Promise<any> {
 		channel.runGenerator(function*() {
 			while (true) {
@@ -112,7 +113,7 @@ export const generatorImplements = {
 
 	takeLast: function(
 		data: EventIterable<{ type: string | string[]; func: (data: any) => void | IterableIterator<EventIterable> }>,
-		channel: Channel
+		channel: IChannel
 	): Promise<any> {
 		channel.runGenerator(function*() {
 			while (true) {
