@@ -3,7 +3,6 @@ import { EventIterable } from "./generator";
 import { ManualPromise } from "manual-promise";
 import { IChannel } from "./IChannel";
 
-
 export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<any> } = any> implements IChannel<Actions> {
 	private onDisposes: Array<(chan?: IChannel<Actions>) => void>;
 	private listens: { [type: string]: Array<(data?: any) => any> };
@@ -94,7 +93,7 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 		if (type in this.listens) {
 			for (let index = this.listens[type].length - 1; index >= 0; index--) {
 				const func = this.listens[type][index];
-				const rtn = func(data);
+				const rtn = func({ type, payload: data });
 				if (this.id && rtn !== undefined) {
 					rnts[this.id] = rtn;
 				}
