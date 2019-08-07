@@ -1,4 +1,4 @@
-import { _createChannel, _ChannelInternal } from "./channel";
+import { _createChannel, _ChannelInternal, IChannelMessage } from "./channel";
 import { EventIterable } from "./generator";
 import { generatorImplements } from "./generatorImpls";
 import { IHub } from "./IHub";
@@ -26,7 +26,7 @@ class _HubInternal implements IHub {
 		this.channels = [];
 	}
 
-	newChannel(id?: string): IChannel {
+	newChannel<Actions extends { [type: string]: IChannelMessage<any> } = any>(id?: string): IChannel<Actions> {
 		const chann = _createChannel(this, id);
 
 		this.channels.push(chann);

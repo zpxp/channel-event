@@ -6,7 +6,7 @@ export interface IChannel<Actions extends { [type: string]: IChannelMessage<any>
 	readonly id: string;
 
 	/**
-	 * Notify all channels in the current `hub` that are listening to `type` event
+	 * Notify all channels in the current `IHub` that are listening to `type` event
 	 * @param type Type of event
 	 * @param data Optional data for event
 	 */

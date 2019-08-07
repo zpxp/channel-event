@@ -1,5 +1,6 @@
 import { IChannel } from "./IChannel";
 import { EventIterable } from "./generator";
+import { IChannelMessage } from "./channel";
 
 export interface IHub {
 	/**
@@ -10,7 +11,7 @@ export interface IHub {
 	 * 
 	 * @param id An optional channel id. Allows two way event communication
 	 */
-	newChannel(id?: string): IChannel;
+	newChannel<Actions extends { [type: string]: IChannelMessage<any> } = any>(id?: string): IChannel<Actions>;
 
 
 	/**
