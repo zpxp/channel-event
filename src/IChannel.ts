@@ -21,8 +21,8 @@ export interface IChannel<Actions extends { [type: string]: IChannelMessage<any>
 	/**
 	 * Listen to an array of event types
 	 */
-	listen(type: string[], callback: (data?: any) => any): () => void;
-	listen(type: string | string[], callback: (data?: any) => any): () => void;
+	listen<T extends keyof Actions>(type: T[], callback: (data?: any) => any): () => void;
+	listen<T extends keyof Actions>(type: T | T[], callback: (data?: any) => any): () => void;
 
 	/**
 	 * Add a listener to this channels disposal and call `func` just before being disposed
