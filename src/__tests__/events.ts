@@ -30,7 +30,7 @@ describe("events", () => {
 		channel.send("test", 5);
 
 		expect(mock).toBeCalledTimes(1);
-		expect(mock).toBeCalledWith(5);
+		expect(mock).toBeCalledWith({ type: "test", payload: 5 });
 	});
 
 	test("listen 2", () => {
@@ -45,7 +45,7 @@ describe("events", () => {
 		hub.global.send("test", 5);
 
 		expect(mock).toBeCalledTimes(2);
-		expect(mock).toBeCalledWith(5);
+		expect(mock).toBeCalledWith({ type: "test", payload: 5 });
 	});
 
 	test("listen 3", () => {
@@ -82,7 +82,7 @@ describe("events", () => {
 		return new Promise(resolve => {
 			channel.runGenerator(function*(): IterableIterator<EventIterable> {
 				const data = yield take("test");
-				expect(data).toEqual(2);
+				expect(data).toEqual({ type: "test", payload: 2 });
 				resolve();
 			});
 
@@ -102,7 +102,7 @@ describe("events", () => {
 			channel.runGenerator(function*(): IterableIterator<EventIterable> {
 				for (let index = 0; index < 10; index++) {
 					const data = yield take("test");
-					expect(data).toEqual(2);
+					expect(data).toEqual({ type: "test", payload: 2 });
 				}
 
 				expect(mock).toBeCalledTimes(10);
@@ -130,7 +130,7 @@ describe("events", () => {
 			channel.runGenerator(function*(): IterableIterator<EventIterable> {
 				for (let index = 0; index < 10; index++) {
 					const data = yield take("test");
-					expect(data).toEqual(2);
+					expect(data).toEqual({ type: "test", payload: 2 });
 				}
 
 				expect(mock).toBeCalledTimes(10);
@@ -186,12 +186,11 @@ describe("events", () => {
 				yield fork(testFork, 500);
 				const g = yield take("test");
 
-				expect(g).toBe(77);
+				expect(g).toEqual({ type: "test", payload: 77 });
 				resolve();
 			});
 		});
 	});
-
 
 	test("generator fork cancel", () => {
 		const hub = createHub();
@@ -254,7 +253,7 @@ describe("events", () => {
 			channel.runGenerator(function*(): IterableIterator<EventIterable> {
 				for (let index = 0; index < 30; index++) {
 					const data = yield take("test");
-					expect(data).toEqual(2);
+					expect(data).toEqual({ type: "test", payload: 2 });
 				}
 
 				completed = true;
