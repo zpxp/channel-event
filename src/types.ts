@@ -5,9 +5,9 @@ export interface EventData<Data = any, Event extends string | number | symbol = 
 
 
 
-export type EventMiddleware = (context: EventMiddlewareContext, next: (context: EventMiddlewareContext) => object) => object;
+export type EventMiddleware<Data = any> = (context: EventMiddlewareContext<Data>, next: (context: EventMiddlewareContext<Data>) => object) => object;
 
-export type EventMiddlewareContext = {
+export type EventMiddlewareContext<Data = any> = {
 	type: string;
-	payload: any;
+	payload: Data;
 };
