@@ -1,6 +1,6 @@
 {
   "name": "channel-event",
-  "version": "2.1.2",
+  "version": "2.1.3",
   "main": "lib/index.js",
   "repository": "git@github.com:zpxp/channel-event.git",
   "author": "brendo",
