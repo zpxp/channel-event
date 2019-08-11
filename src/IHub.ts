@@ -17,14 +17,14 @@ export interface IHub {
 	/**
 	 * Add a custom generator middleware to the event channel generator. Whenever a generator `yield`s an `EventIterable`, the hub will look for
 	 * any middleware whos function name matches the `EventIterable.function`.
-	 * 
+	 *
 	 * Generator middleware takes 2 arguments, the first contains all the arguments that the yielded function was called with, the second is the `IChannel` instance.
 	 * Middlware must return a `Promise`, that when resolved, will return the resolved data from the `yield` statement.
-	 * 
+	 *
 	 * 		hub.addGeneratorMiddleware("put", function(data: EventIterable<{ type: string; data: any }>, channel: IChannel): Promise<any> {
 	 * 			return Promise.resolve(channel.send(data.value.type, data.value.data));
 	 * 		});
-	 * 
+	 *
 	 *
 	 * @param functionName The name of this generator middleware to be added
 	 * @param middleware The middleware implementation that takes 1-2 args: The `EventIterable` that was yielded, in the generator, and a reference to the `IChannel` object
@@ -36,20 +36,20 @@ export interface IHub {
 	 */
 	global: IChannel;
 
-
 	/**
 	 * Tap into event pipeline by providing middleware functions. All calls to `send` or `put` will result in event middleware running.
 	 * Call `next` and return the result inside the supplied function to proceed the event.
-	 * 
+	 *
 	 * 	hub.addEventMiddleware((context, next) => {
-	 * 		// log all events 
+	 * 		// log all events
 	 * 		console.log(context.type);
 	 * 		return next(context);
 	 * 	})
-	 * 
-	 * @param middleware 
+	 *
+	 * @param middleware
 	 */
-	addEventMiddleware(...middleware: EventMiddleware[]): void;
+	addEventMiddleware(middleware: EventMiddleware): void;
+	addEventMiddleware(middleware: EventMiddleware, ...additionalMiddleware: EventMiddleware[]): void;
 
 	/**
 	 * Cleanup any channels and dispose this hub
