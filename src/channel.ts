@@ -2,6 +2,7 @@ import { t_HubInternal as _HubInternal } from "./hub";
 import { EventIterable } from "./generator";
 import { ManualPromise } from "manual-promise";
 import { IChannel } from "./IChannel";
+import { EventData } from "./types";
 
 export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<any> } = any> implements IChannel<Actions> {
 	private onDisposes: Array<(chan?: IChannel<Actions>) => void>;
@@ -27,7 +28,7 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 		return Object.keys(returnData).length ? returnData : null;
 	}
 
-	listen(type: string | string[], callback: (data?: any) => any) {
+	listen(type: string | string[], callback: (data?: EventData) => any) {
 		if (this.disposed) {
 			throw new Error("Channel disposed");
 		}

@@ -1,6 +1,7 @@
 import { t_HubInternal as _HubInternal } from "./hub";
 import { EventIterable } from "./generator";
 import { IChannelMessage } from "./channel";
+import { EventData } from "./types";
 
 export interface IChannel<Actions extends { [type: string]: IChannelMessage<any> } = any> {
 	readonly id: string;
@@ -17,12 +18,12 @@ export interface IChannel<Actions extends { [type: string]: IChannelMessage<any>
 	 * @param type Type of event to listen to
 	 * @param callback Function to call whenever `type` is sent
 	 */
-	listen<T extends keyof Actions>(type: T, callback: (data?: { type: T; payload: Actions[T] }) => any): () => void;
+	listen<T extends keyof Actions>(type: T, callback: (data?: EventData<Actions[T], T>) => any): () => void;
 	/**
 	 * Listen to an array of event types
 	 */
-	listen<T extends keyof Actions>(type: T[], callback: (data?: { type: T; payload: Actions[T] }) => any): () => void;
-	listen<T extends keyof Actions>(type: T | T[], callback: (data?: { type: T; payload: Actions[T] }) => any): () => void;
+	listen<T extends keyof Actions>(type: T[], callback: (data?: EventData<Actions[T], T>) => any): () => void;
+	listen<T extends keyof Actions>(type: T | T[], callback: (data?: EventData<Actions[T], T>) => any): () => void;
 
 	/**
 	 * Add a listener to this channels disposal and call `func` just before being disposed
