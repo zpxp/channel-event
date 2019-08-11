@@ -6,13 +6,14 @@ import { IChannel } from "./IChannel";
 import { EventMiddleware, EventMiddlewareContext } from "./types";
 
 class _HubInternal implements IHub {
-	static generatorMiddlewares: { [name: string]: Array<(args: EventIterable, channel: IChannel) => Promise<any>> } = {};
+	private static globalGeneratorMiddlewares: { [name: string]: Array<(args: EventIterable, channel: IChannel) => Promise<any>> } = {};
+	private _generatorMiddlewares: { [name: string]: Array<(args: EventIterable, channel: IChannel) => Promise<any>> };
 	private eventMiddleware: Array<EventMiddleware>;
 	private _globalChannel: IChannel<any>;
 	private readonly options: CreateHubOptions;
 
-	get generatorMiddlewares() {
-		return _HubInternal.generatorMiddlewares;
+	get generatorMiddlewares(): { [name: string]: Array<(args: EventIterable, channel: IChannel) => Promise<any>> } {
+		return this._generatorMiddlewares;
 	}
 	private channels: _ChannelInternal[];
 
@@ -27,6 +28,7 @@ class _HubInternal implements IHub {
 		this.options = { ...defaultOptions, ...options };
 		this.channels = [];
 		this.eventMiddleware = this.options.eventMiddleware || [];
+		this._generatorMiddlewares = { ..._HubInternal.globalGeneratorMiddlewares };
 	}
 
 	addEventMiddleware(...middleware: EventMiddleware[]): void {
@@ -85,16 +87,24 @@ class _HubInternal implements IHub {
 		return handleNextMiddleware({ type, payload });
 	}
 
-	static addGeneratorMiddleware(functionName: string, middleware: (args: EventIterable, channel: IChannel) => Promise<any>): void {
-		if (!_HubInternal.generatorMiddlewares[functionName]) {
-			_HubInternal.generatorMiddlewares[functionName] = [];
+	static addGlobalGeneratorMiddleware(functionName: string, middleware: (args: EventIterable, channel: IChannel) => Promise<any>): void {
+		if (!_HubInternal.globalGeneratorMiddlewares[functionName]) {
+			_HubInternal.globalGeneratorMiddlewares[functionName] = [];
 		}
 
-		_HubInternal.generatorMiddlewares[functionName].push(middleware);
+		_HubInternal.globalGeneratorMiddlewares[functionName].push(middleware);
 	}
 
-	addGeneratorMiddleware(functionName: string, middleware: (args: EventIterable, channel: IChannel) => Promise<any>): void {
-		_HubInternal.addGeneratorMiddleware(functionName, middleware);
+	addGeneratorMiddleware(functionName: string, middleware: (args: EventIterable, channel?: IChannel) => Promise<any>): void {
+		if (!this._generatorMiddlewares[functionName]) {
+			this._generatorMiddlewares[functionName] = [];
+		}
+
+		this._generatorMiddlewares[functionName].push(middleware);
+	}
+
+	addGlobalGeneratorMiddleware(functionName: string, middleware: (args: EventIterable, channel: IChannel) => Promise<any>): void {
+		_HubInternal.addGlobalGeneratorMiddleware(functionName, middleware);
 	}
 }
 
@@ -120,7 +130,7 @@ for (const key in generatorImplements) {
 	if (generatorImplements.hasOwnProperty(key)) {
 		const impl = (generatorImplements as any)[key];
 
-		_HubInternal.addGeneratorMiddleware(key, impl);
+		_HubInternal.addGlobalGeneratorMiddleware(key, impl);
 	}
 }
 
