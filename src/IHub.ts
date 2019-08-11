@@ -39,6 +39,7 @@ export interface IHub {
 	/**
 	 * Tap into event pipeline by providing middleware functions. All calls to `send` or `put` will result in event middleware running.
 	 * Call `next` and return the result inside the supplied function to proceed the event.
+	 * Middleware is run in the order of adding to the hub.
 	 *
 	 * 	hub.addEventMiddleware((context, next) => {
 	 * 		// log all events
