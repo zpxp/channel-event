@@ -76,7 +76,7 @@ class _HubInternal implements IHub {
 				let returnData = {};
 				for (let index = 0; index < this.channels.length; index++) {
 					const chann = this.channels[index];
-					returnData = { ...returnData, ...chann.checkSend(type, payload) };
+					returnData = { ...returnData, ...chann.checkSend(context.type, context.payload) };
 				}
 				return returnData;
 			}

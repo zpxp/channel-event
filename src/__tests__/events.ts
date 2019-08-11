@@ -89,16 +89,17 @@ describe("events", () => {
 		const channel3 = hub.newChannel();
 		const channel4 = hub.newChannel("id4");
 
-		channel1.listen("test", () => 6);
-		channel2.listen("test", () => "returns");
-		channel3.listen("test", () => 66);
-		channel4.listen("test", () => null);
+		channel1.listen("switch", () => 6);
+		channel2.listen("switch", () => "returns");
+		channel3.listen("switch", () => 66);
+		channel4.listen("switch", () => null);
 
 		const mock = jest.fn();
 		const mock2 = jest.fn();
 
 		hub.addEventMiddleware((context, next) => {
 			mock2(context.type);
+			context.type = "switch";
 			return next(context);
 		});
 
@@ -110,7 +111,7 @@ describe("events", () => {
 		});
 
 		const result = hub.global.send("test");
-		
+
 		expect(mock).toBeCalled();
 		expect(mock2).toBeCalled();
 		expect(mock2).toBeCalledWith("test");
