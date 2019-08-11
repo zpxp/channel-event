@@ -4196,10 +4196,10 @@ mamacro@^0.0.3:
   resolved "https://www.myget.org/F/redisoft-components/auth/e9969204-1895-439f-b99e-995965d8088b/npm/mamacro/-/mamacro-0.0.3.tgz#ad2c9576197c9f1abf308d0787865bd975a3f3e4"
   integrity sha1-rSyVdhl8nxq/MI0Hh4Zb2XWj8+Q=
 
-manual-promise@^1.0.2:
-  version "1.0.2"
-  resolved "https://www.myget.org/F/redisoft-components/auth/e9969204-1895-439f-b99e-995965d8088b/npm/manual-promise/-/manual-promise-1.0.2.tgz#fd2a245369b7cb23a1ffbbc14e3dd3651d6e80df"
-  integrity sha1-/SokU2m3yyOh/7vBTj3TZR1ugN8=
+manual-promise@^1.0.3:
+  version "1.0.3"
+  resolved "https://www.myget.org/F/redisoft-components/auth/e9969204-1895-439f-b99e-995965d8088b/npm/manual-promise/-/manual-promise-1.0.3.tgz#d7bcc6ea1065cc4430db0ea430fd7b4a15322ec4"
+  integrity sha1-17zG6hBlzEQw2w6kMP17ShUyLsQ=
 
 map-age-cleaner@^0.1.1:
   version "0.1.3"

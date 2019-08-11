@@ -56,6 +56,6 @@
     "webpack": "4.30.0"
   },
   "dependencies": {
-    "manual-promise": "^1.0.2"
+    "manual-promise": "^1.0.3"
   }
 }
