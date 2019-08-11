@@ -3,11 +3,13 @@ import { EventIterable } from "./generator";
 import { generatorImplements } from "./generatorImpls";
 import { IHub } from "./IHub";
 import { IChannel } from "./IChannel";
+import { EventMiddleware, EventMiddlewareContext } from "./types";
 
 class _HubInternal implements IHub {
 	static generatorMiddlewares: { [name: string]: Array<(args: EventIterable, channel: IChannel) => Promise<any>> } = {};
+	private eventMiddleware: Array<EventMiddleware>;
 	private _globalChannel: IChannel<any>;
-	private readonly options: { enableLogging?: boolean };
+	private readonly options: CreateHubOptions;
 
 	get generatorMiddlewares() {
 		return _HubInternal.generatorMiddlewares;
@@ -24,6 +26,11 @@ class _HubInternal implements IHub {
 	constructor(options: CreateHubOptions) {
 		this.options = { ...defaultOptions, ...options };
 		this.channels = [];
+		this.eventMiddleware = this.options.eventMiddleware || [];
+	}
+
+	addEventMiddleware(...middleware: EventMiddleware[]): void {
+		this.eventMiddleware = this.eventMiddleware.concat(middleware);
 	}
 
 	newChannel<Actions extends { [type: string]: IChannelMessage<any> } = any>(id?: string): IChannel<Actions> {
@@ -51,17 +58,31 @@ class _HubInternal implements IHub {
 		this.channels = [];
 	}
 
-	handleSend(type: string, data: any) {
+	handleSend(type: string, payload: any) {
 		if (this.options.enableLogging) {
-			console.log("%cEvent:" + `%c ${type}`, "color: #0f0;font-weight:bold;", "", data);
+			console.log("%cEvent:" + `%c ${type}`, "color: #0f0;font-weight:bold;", "", payload);
 		}
 
-		let returnData = {};
-		for (let index = 0; index < this.channels.length; index++) {
-			const chann = this.channels[index];
-			returnData = { ...returnData, ...chann.checkSend(type, data) };
-		}
-		return returnData;
+		let currentIndex = 0;
+
+		// first run all middleware then incoke listeners and pass result data back up the middleware
+		const handleNextMiddleware = (context: EventMiddlewareContext) => {
+			if (currentIndex < this.eventMiddleware.length) {
+				const index = currentIndex++;
+				return this.eventMiddleware[index](context, handleNextMiddleware);
+			} else {
+				// at end. invoke listeners
+
+				let returnData = {};
+				for (let index = 0; index < this.channels.length; index++) {
+					const chann = this.channels[index];
+					returnData = { ...returnData, ...chann.checkSend(type, payload) };
+				}
+				return returnData;
+			}
+		};
+
+		return handleNextMiddleware({ type, payload });
 	}
 
 	static addGeneratorMiddleware(functionName: string, middleware: (args: EventIterable, channel: IChannel) => Promise<any>): void {
@@ -80,6 +101,11 @@ class _HubInternal implements IHub {
 type CreateHubOptions = {
 	/** Log all send events */
 	enableLogging?: boolean;
+	/**
+	 * Tap into event pipeline by providing middleware functions. Call `next` and return the result inside the supplied function
+	 * to proceed the event
+	 */
+	eventMiddleware?: Array<EventMiddleware>;
 };
 
 export function createHub(options?: CreateHubOptions): IHub {

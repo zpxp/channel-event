@@ -25,7 +25,7 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 		}
 
 		const returnData = this.hub.handleSend(type as string, data);
-		return Object.keys(returnData).length ? returnData : null;
+		return returnData && Object.keys(returnData).length ? returnData : null;
 	}
 
 	listen(type: string | string[], callback: (data?: EventData) => any) {

@@ -82,6 +82,41 @@ describe("events", () => {
 		expect(result2).toBeNull();
 	});
 
+	test("hub middleware", () => {
+		const hub = createHub();
+		const channel1 = hub.newChannel("id1");
+		const channel2 = hub.newChannel("id2");
+		const channel3 = hub.newChannel();
+		const channel4 = hub.newChannel("id4");
+
+		channel1.listen("test", () => 6);
+		channel2.listen("test", () => "returns");
+		channel3.listen("test", () => 66);
+		channel4.listen("test", () => null);
+
+		const mock = jest.fn();
+		const mock2 = jest.fn();
+
+		hub.addEventMiddleware((context, next) => {
+			mock2(context.type);
+			return next(context);
+		});
+
+		hub.addEventMiddleware((context, next) => {
+			const data = next(context);
+			expect(data).toEqual({ id1: 6, id2: "returns", id4: null });
+			mock();
+			return null;
+		});
+
+		const result = hub.global.send("test");
+		
+		expect(mock).toBeCalled();
+		expect(mock2).toBeCalled();
+		expect(mock2).toBeCalledWith("test");
+		expect(result).toBeNull();
+	});
+
 	test("generator", () => {
 		const hub = createHub();
 		const channel = hub.newChannel();
