@@ -58,7 +58,7 @@ class _HubInternal implements IHub {
 		this.channels = [];
 	}
 
-	handleSend(type: string, payload: any) {
+	handleSend(type: string, payload: any, sender: IChannel) {
 		if (this.options.enableLogging) {
 			console.log("%cEvent:" + `%c ${type}`, "color: #0f0;font-weight:bold;", "", payload);
 		}
@@ -69,7 +69,7 @@ class _HubInternal implements IHub {
 		const handleNextMiddleware = (context: EventMiddlewareContext) => {
 			if (currentIndex < this.eventMiddleware.length) {
 				const index = currentIndex++;
-				return this.eventMiddleware[index](context, handleNextMiddleware);
+				return this.eventMiddleware[index](context, handleNextMiddleware, sender);
 			} else {
 				// at end. invoke listeners
 

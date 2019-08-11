@@ -24,7 +24,7 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 			throw new Error("Channel disposed");
 		}
 
-		const returnData = this.hub.handleSend(type as string, data);
+		const returnData = this.hub.handleSend(type as string, data, this as IChannel);
 		return returnData && Object.keys(returnData).length ? returnData : null;
 	}
 
