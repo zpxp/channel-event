@@ -11,7 +11,7 @@ export interface IChannel<Actions extends { [type: string]: IChannelMessage<any>
 	 * @param type Type of event
 	 * @param data Optional data for event
 	 */
-	send<T extends keyof Actions>(type: T, data?: Actions[T]): void;
+	send<T extends keyof Actions>(type: T, data?: Actions[T]): any;
 
 	/**
 	 * Listen to a given `type` of event and call `callback` whenever `type` is sent
