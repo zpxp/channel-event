@@ -77,6 +77,9 @@ describe("events", () => {
 
 		const result = hub.global.send("test");
 		expect(result).toEqual({ id1: 6, id2: "returns", id4: null });
+
+		const result2 = hub.global.send("test2");
+		expect(result2).toBeNull();
 	});
 
 	test("generator", () => {
