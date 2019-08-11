@@ -63,6 +63,22 @@ describe("events", () => {
 		expect(mock).toBeCalledTimes(3);
 	});
 
+	test("listen returns", () => {
+		const hub = createHub();
+		const channel1 = hub.newChannel("id1");
+		const channel2 = hub.newChannel("id2");
+		const channel3 = hub.newChannel();
+		const channel4 = hub.newChannel("id4");
+
+		channel1.listen("test", () => 6);
+		channel2.listen("test", () => "returns");
+		channel3.listen("test", () => 66);
+		channel4.listen("test", () => null);
+
+		const result = hub.global.send("test");
+		expect(result).toEqual({ id1: 6, id2: "returns", id4: null });
+	});
+
 	test("generator", () => {
 		const hub = createHub();
 		const channel = hub.newChannel();
