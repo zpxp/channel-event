@@ -9,6 +9,13 @@
     "dist/**/*",
     "lib/**/*"
   ],
+  "keywords": [
+    "events",
+    "async",
+    "channel-event",
+    "pub sub",
+    "saga"
+  ],
   "scripts": {
     "analyze": "source-map-explorer dist/js/main.*",
     "build": "yarn install && node scripts/build.js",
