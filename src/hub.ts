@@ -60,7 +60,7 @@ class _HubInternal implements IHub {
 		this.channels = [];
 	}
 
-	handleSend(type: string, payload: any, sender: IChannel) {
+	handleSend(type: string, payload: any, sender: IChannel): any {
 		if (this.options.enableLogging) {
 			console.log("%cEvent:" + `%c ${type}`, "color: #0f0;font-weight:bold;", "", payload);
 		}
@@ -75,7 +75,7 @@ class _HubInternal implements IHub {
 			} else {
 				// at end. invoke listeners
 
-				let returnData = {};
+				let returnData = { __CHANNEL_RTN: true };
 				for (let index = 0; index < this.channels.length; index++) {
 					const chann = this.channels[index];
 					returnData = { ...returnData, ...chann.checkSend(context.type, context.payload) };

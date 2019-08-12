@@ -25,7 +25,15 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 		}
 
 		const returnData = this.hub.handleSend(type as string, data, this as IChannel);
-		return returnData && Object.keys(returnData).length ? returnData : null;
+		if (returnData && "__CHANNEL_RTN" in returnData) {
+			// is a standard return object dictionary
+			// remove dictoinary marker member
+			delete returnData.__CHANNEL_RTN;
+			return Object.keys(returnData).length ? returnData : null;
+		} else {
+			// data returned is not something we recognise, just return it. It was overriden in event middleware
+			return returnData;
+		}
 	}
 
 	listen(type: string | string[], callback: (data?: EventData) => any) {
