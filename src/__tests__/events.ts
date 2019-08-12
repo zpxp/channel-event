@@ -105,7 +105,7 @@ describe("events", () => {
 
 		hub.addEventMiddleware((context, next) => {
 			const data = next(context);
-			expect(data).toEqual({ id1: 6, id2: "returns", id4: null });
+			expect(data).toEqual({ id1: 6, id2: "returns", id4: null, __CHANNEL_RTN: true });
 			mock();
 			return null;
 		});
