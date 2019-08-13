@@ -2,6 +2,7 @@ import { t_HubInternal as _HubInternal } from "./hub";
 import { EventIterable } from "./generator";
 import { IChannelMessage } from "./channel";
 import { EventData } from "./types";
+import { IGeneratorBuilder } from "./generatorBuilder";
 
 export interface IChannel<Actions extends { [type: string]: IChannelMessage<any> } = any> {
 	readonly id: string;
@@ -39,6 +40,12 @@ export interface IChannel<Actions extends { [type: string]: IChannelMessage<any>
 	 * @param generatorFunc
 	 */
 	runGenerator(generatorFunc: () => IterableIterator<EventIterable>): void;
+
+	/** 
+	 * A generator configuration property that allows for configuring how a generator is run
+	 * @see IGeneratorBuilder
+	 */
+	generator: IGeneratorBuilder;
 
 	/**
 	 * Run a given generator function and call `onCompletion` when the function returns

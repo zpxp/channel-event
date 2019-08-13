@@ -3,6 +3,7 @@ import { EventIterable } from "./generator";
 import { ManualPromise } from "manual-promise";
 import { IChannel } from "./IChannel";
 import { EventData } from "./types";
+import { GeneratorBuilder, IGeneratorBuilder } from "./generatorBuilder";
 
 export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<any> } = any> implements IChannel<Actions> {
 	private onDisposes: Array<(chan?: IChannel<Actions>) => void>;
@@ -17,6 +18,10 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 		this.disposed = false;
 		this.runningGeneratorProms = [];
 		this.id = id;
+	}
+
+	get generator(): IGeneratorBuilder {
+		return new GeneratorBuilder(this);
 	}
 
 	send<T extends keyof Actions>(type: T, data?: Actions[T]) {
