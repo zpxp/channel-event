@@ -4,11 +4,13 @@ import { _ChannelInternal } from "./channel";
 export class GeneratorBuilder implements IGeneratorBuilder {
 	private generators: Array<() => IterableIterator<EventIterable>>;
 	private completionCallbacks: Array<(result?: any) => void>;
+	private errorCallbacks: Array<(error?: any) => void>;
 	private restartAsyncError: boolean;
 
 	constructor(private channel: _ChannelInternal) {
 		this.generators = [];
 		this.completionCallbacks = [];
+		this.errorCallbacks = [];
 	}
 
 	addGenerator(generatorFunc: () => IterableIterator<EventIterable>) {
@@ -23,6 +25,11 @@ export class GeneratorBuilder implements IGeneratorBuilder {
 
 	restartOnAsyncError() {
 		this.restartAsyncError = true;
+		return this;
+	}
+
+	addErrorCallback(callback: (error?: any) => void) {
+		this.errorCallbacks.push(callback);
 		return this;
 	}
 
@@ -49,13 +56,24 @@ export class GeneratorBuilder implements IGeneratorBuilder {
 		if (this.restartAsyncError) {
 			for (let index = 0; index < this.generators.length; index++) {
 				const generator = this.generators[index];
-				this.channel.runGenerator(tryFork(generator, onCompletion(index)));
+				try {
+					this.channel.runGenerator(tryFork(generator, onCompletion(index)), null, err => {
+						this.errorCallbacks.forEach(x => x(err));
+					});
+				} catch (e) {
+					this.errorCallbacks.forEach(x => x(e));
+				}
 			}
 		} else {
 			for (let index = 0; index < this.generators.length; index++) {
 				const generator = this.generators[index];
-				const iter = generator();
-				this.channel.processIterator(iter, null, onCompletion(index));
+				try {
+					this.channel.runGenerator(generator, onCompletion(index), err => {
+						this.errorCallbacks.forEach(x => x(err));
+					});
+				} catch (e) {
+					this.errorCallbacks.forEach(x => x(e));
+				}
 			}
 		}
 	}
@@ -74,13 +92,19 @@ export interface IGeneratorBuilder {
 	addGenerator(generatorFunc: () => IterableIterator<EventIterable>): IGeneratorBuilder;
 
 	/**
-	 * Add a acallback function to invoke when all generators are run to completion
+	 * Add a callback function to invoke when all generators are run to completion
 	 * @param callback Function to invoke when all added generators are run to completion. If more than one generetor is added, then `result` will be an array
 	 */
 	addCompletionCallback(callback: (result?: any | any[]) => void): IGeneratorBuilder;
 
 	/**
-	 * Restart generators when they throw an async error. An async error is any error after the current stack frame. Sync errors are not caught becuase restarting on sync errors
+	 * Add a callback function to invoke whenever a generator throws an uncaught exception
+	 * @param callback
+	 */
+	addErrorCallback(callback: (error?: any) => void): IGeneratorBuilder;
+
+	/**
+	 * Restart generators when they throw an async error. An async error is any error after the current stack frame. Sync errors are not caught because restarting on sync errors
 	 * would result in infinite loops
 	 */
 	restartOnAsyncError(): IGeneratorBuilder;

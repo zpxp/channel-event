@@ -6,6 +6,13 @@ export class GeneratorUtils {
 	}
 
 	static isIterableIterator(val: any): val is IterableIterator<EventIterable<any>> {
-		return val && "next" in val && typeof val.next === "function";
+		return (
+			val &&
+			typeof val === "object" &&
+			"next" in val &&
+			typeof val.next === "function" &&
+			"throw" in val &&
+			typeof val.throw === "function"
+		);
 	}
 }

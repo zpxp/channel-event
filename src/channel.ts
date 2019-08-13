@@ -4,6 +4,7 @@ import { ManualPromise } from "manual-promise";
 import { IChannel } from "./IChannel";
 import { EventData } from "./types";
 import { GeneratorBuilder, IGeneratorBuilder } from "./generatorBuilder";
+import { GeneratorUtils } from "./utils";
 
 export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<any> } = any> implements IChannel<Actions> {
 	private onDisposes: Array<(chan?: IChannel<Actions>) => void>;
@@ -116,14 +117,38 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 		return rnts;
 	}
 
-	runGenerator(generatorFunc: () => IterableIterator<EventIterable>, onCompletion?: (result?: any) => void) {
+	runGenerator(
+		generatorFunc: () => IterableIterator<EventIterable>,
+		onCompletion?: (result?: any) => void,
+		onError?: (error: any) => void
+	) {
 		const iter = generatorFunc();
-		this.processIterator(iter, null, onCompletion);
+		this.processIterator(iter, null, onCompletion, onError);
 	}
 
-	processIterator(iter: IterableIterator<EventIterable>, argument?: any, onCompletion?: (result?: any) => void) {
+	processIterator(
+		iter: IterableIterator<EventIterable>,
+		argument?: any,
+		onCompletion?: (result?: any) => void,
+		onError?: (error: any) => void
+	) {
 		let lastVal: IteratorResult<EventIterable<any>> = null;
-		for (let result = (lastVal = iter.next(argument)); !result.done; result = iter.next(argument), lastVal = result) {
+
+		// handle any sync errors from invokation
+		const invoker = () => {
+			if (onError) {
+				try {
+					return iter.next(argument);
+				} catch (e) {
+					onError(e);
+					throw e;
+				}
+			} else {
+				return iter.next(argument);
+			}
+		};
+
+		for (let result = (lastVal = invoker()); !result.done; result = invoker(), lastVal = result) {
 			argument = undefined;
 			if (!result.value || !result.value.function) {
 				throw new Error("Must yield a 'IterableIterator<EventIterable>' function or value");
@@ -142,7 +167,10 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 
 			const value = this.processEventIterable(result.value.function, 0, result.value, result.value.value);
 
-			if (value instanceof Promise) {
+			if (value instanceof Error) {
+				onError && onError(value);
+				return;
+			} else if (value instanceof Promise) {
 				this.runningGeneratorProms.push(value);
 
 				let cancelled = false;
@@ -153,14 +181,17 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 							this.runningGeneratorProms.splice(index, 1);
 						}
 						if (!cancelled && !this.disposed) {
-							this.processIterator(iter, data.value, onCompletion);
+							this.processIterator(iter, data.value, onCompletion, onError);
 						}
 					},
 					err => {
+						onError && onError(err);
 						// prevent further iterations
 						cancelled = true;
+						result = iter.throw(err);
 					}
 				);
+
 				return () => {
 					cancelled = true;
 				};
@@ -175,16 +206,29 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 	}
 
 	processEventIterable(functionName: string, index: number, iterable: EventIterable, data: any): EventIterable | Promise<EventIterable> {
-		if (data instanceof Promise) {
+		if (GeneratorUtils.isIterableIterator(data)) {
+			return new Promise((resolve, reject) => {
+				this.processIterator(
+					data,
+					null,
+					data => {
+						iterable.value = data;
+						resolve(this.processEventIterable(functionName, index, iterable, data));
+					},
+					reject
+				);
+			});
+		} else if (data instanceof Promise) {
 			return data.then(data => {
 				iterable.value = data;
-				return this.processEventIterable(functionName, index + 1, iterable, data);
+				return this.processEventIterable(functionName, index, iterable, data);
 			});
 		}
 
 		for (; index < this.hub.generatorMiddlewares[functionName].length; index++) {
 			const func = this.hub.generatorMiddlewares[functionName][index];
 			data = func({ ...iterable }, this as IChannel);
+
 			if (data instanceof Promise) {
 				return data.then(data => {
 					iterable.value = data;

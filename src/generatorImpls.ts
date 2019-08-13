@@ -33,18 +33,8 @@ export const generatorImplements = {
 	 * @param channel
 	 */
 	call: function<A extends any[]>(data: EventIterable<{ func: (...args: A) => any; args: A }>, channel: tChannel): Promise<any> {
-		return new Promise((resolve, reject) => {
-			const result = data.value.func.apply(null, data.value.args);
-			if (GeneratorUtils.isIterableIterator(result)) {
-				channel.processIterator(result, null, resolve);
-			} else if (result && result instanceof Promise) {
-				result.then(data => {
-					resolve(data);
-				});
-			} else {
-				resolve(result);
-			}
-		});
+		const result = data.value.func.apply(null, data.value.args);
+		return Promise.resolve(result);
 	},
 
 	fork: function<A extends any[]>(data: EventIterable<{ func: (...args: A) => any; args: A }>, channel: tChannel): Promise<any> {
