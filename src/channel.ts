@@ -165,7 +165,7 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 				);
 			}
 
-			const value = this.processEventIterable(result.value.function, 0, result.value, result.value.value);
+			const value = this.processEventIterable(result.value, 0);
 
 			if (value instanceof Error) {
 				onError && onError(value);
@@ -186,9 +186,21 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 					},
 					err => {
 						onError && onError(err);
-						// prevent further iterations
-						cancelled = true;
-						result = iter.throw(err);
+						if (result.done) {
+							// prevent further iterations
+							cancelled = true;
+						} else {
+							const nextYieldResult = iter.throw(err);
+							if (
+								!this.disposed &&
+								nextYieldResult &&
+								GeneratorUtils.isIteratorResult(nextYieldResult) &&
+								!nextYieldResult.done &&
+								GeneratorUtils.isEventIterable(nextYieldResult.value)
+							) {
+								this.processEventIterable(nextYieldResult.value, 0);
+							}
+						}
 					}
 				);
 
@@ -205,34 +217,34 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 		}
 	}
 
-	processEventIterable(functionName: string, index: number, iterable: EventIterable, data: any): EventIterable | Promise<EventIterable> {
-		if (GeneratorUtils.isIterableIterator(data)) {
+	processEventIterable(iterable: EventIterable, index: number): EventIterable | Promise<EventIterable> {
+		if (GeneratorUtils.isIterableIterator(iterable.value)) {
 			return new Promise((resolve, reject) => {
 				this.processIterator(
-					data,
+					iterable.value,
 					null,
 					data => {
 						iterable.value = data;
-						resolve(this.processEventIterable(functionName, index, iterable, data));
+						resolve(this.processEventIterable(iterable, index));
 					},
 					reject
 				);
 			});
-		} else if (data instanceof Promise) {
-			return data.then(data => {
+		} else if (iterable.value instanceof Promise) {
+			return iterable.value.then(data => {
 				iterable.value = data;
-				return this.processEventIterable(functionName, index, iterable, data);
+				return this.processEventIterable(iterable, index);
 			});
 		}
 
-		for (; index < this.hub.generatorMiddlewares[functionName].length; index++) {
-			const func = this.hub.generatorMiddlewares[functionName][index];
-			data = func({ ...iterable }, this as IChannel);
+		for (; index < this.hub.generatorMiddlewares[iterable.function].length; index++) {
+			const func = this.hub.generatorMiddlewares[iterable.function][index];
+			const data = func({ ...iterable }, this as IChannel);
 
 			if (data instanceof Promise) {
 				return data.then(data => {
 					iterable.value = data;
-					return this.processEventIterable(functionName, index + 1, iterable, data);
+					return this.processEventIterable(iterable, index + 1);
 				});
 			} else {
 				iterable.value = data;

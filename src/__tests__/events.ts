@@ -494,9 +494,10 @@ describe("events", () => {
 		return new Promise(resolve => {
 			let count = 0;
 			const mock = jest.fn();
+
 			function* test(): IterableIterator<EventIterable> {
 				mock();
-				yield put("test");
+				console.log(222);
 				if (count < 10) {
 					count++;
 					yield call(
@@ -520,7 +521,6 @@ describe("events", () => {
 			}
 
 			channel.generator
-				.addGenerator(check)
 				.addGenerator(test)
 				.restartOnAsyncError()
 				.run();
