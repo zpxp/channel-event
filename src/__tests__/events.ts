@@ -500,14 +500,16 @@ describe("events", () => {
 				console.log(222);
 				if (count < 10) {
 					count++;
-					yield call(
-						() =>
-							new Promise((resolve, reject) => {
-								setTimeout(() => {
-									reject("err");
-								});
-							})
-					);
+					yield delay(1);
+					throw new Error("err");
+					// yield call(
+					// 	() =>
+					// 		new Promise((resolve, reject) => {
+					// 			setTimeout(() => {
+					// 				reject("err");
+					// 			});
+					// 		})
+					// );
 				}
 			}
 
@@ -525,5 +527,5 @@ describe("events", () => {
 				.restartOnAsyncError()
 				.run();
 		});
-	});
+	}, 400000);
 });
