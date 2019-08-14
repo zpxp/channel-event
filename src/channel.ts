@@ -1,6 +1,5 @@
 import { t_HubInternal as _HubInternal } from "./hub";
 import { EventIterable } from "./generator";
-import { ManualPromise } from "manual-promise";
 import { IChannel } from "./IChannel";
 import { EventData } from "./types";
 import { GeneratorBuilder, IGeneratorBuilder } from "./generatorBuilder";
@@ -93,13 +92,13 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 			func(this as IChannel<Actions>);
 		}
 		this.onDisposes = [];
-		for (let index = 0; index < this.runningGeneratorProms.length; index++) {
-			const prom = this.runningGeneratorProms[index];
-			if (prom instanceof ManualPromise) {
-				// if its a manual prom we can cancel it
-				prom.reject();
-			}
-		}
+		// for (let index = 0; index < this.runningGeneratorProms.length; index++) {
+		// 	const prom = this.runningGeneratorProms[index];
+		// 	if (prom instanceof ManualPromise) {
+		// 		// if its a manual prom we can cancel it
+		// 		prom.reject();
+		// 	}
+		// }
 		this.runningGeneratorProms = [];
 	}
 
@@ -141,15 +140,14 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 					return iter.next(argument);
 				} catch (e) {
 					onError(e);
-					throw e;
-					// return { done: true, value: e };
+					return null;
 				}
 			} else {
 				return iter.next(argument);
 			}
 		};
 
-		for (let result = (lastVal = invoker()); !result.done; result = invoker(), lastVal = result) {
+		for (let result = (lastVal = invoker()); result && !result.done; result = invoker(), lastVal = result) {
 			argument = undefined;
 			if (!result.value || !result.value.function) {
 				throw new Error("Must yield a 'IterableIterator<EventIterable>' function or value");
@@ -216,7 +214,7 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 			}
 		}
 
-		if (onCompletion) {
+		if (onCompletion && lastVal) {
 			onCompletion(lastVal.value);
 		}
 	}
@@ -243,20 +241,16 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 			});
 		}
 
-		for (; index < this.hub.generatorMiddlewares[iterable.function].length; index++) {
+		if (index < this.hub.generatorMiddlewares[iterable.function].length) {
 			const func = this.hub.generatorMiddlewares[iterable.function][index];
 			const data = func({ ...iterable }, this as IChannel);
 
-			if (data instanceof Promise) {
-				return data.then(data => {
-					iterable.value = data;
-					return this.processEventIterable(iterable, index + 1);
-				});
-			} else {
-				iterable.value = data;
-			}
+			iterable.value = data;
+
+			return this.processEventIterable(iterable, index + 1);
+		} else {
+			return iterable;
 		}
-		return iterable;
 	}
 }
 

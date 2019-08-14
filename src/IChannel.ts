@@ -32,14 +32,6 @@ export interface IChannel<Actions extends { [type: string]: IChannelMessage<any>
 	 */
 	onDispose(func: (chan?: IChannel<Actions>) => void): void;
 
-	/**
-	 * Run a given generator function.
-	 *
-	 * @see https://github.com/zpxp/channel-event/blob/v1/src/generator.ts
-	 * @see https://github.com/zpxp/channel-event/blob/v1/src/__tests__/events.ts#L102
-	 * @param generatorFunc
-	 */
-	runGenerator(generatorFunc: () => IterableIterator<EventIterable>): void;
 
 	/** 
 	 * A generator configuration property that allows for configuring how a generator is run
@@ -48,7 +40,22 @@ export interface IChannel<Actions extends { [type: string]: IChannelMessage<any>
 	generator: IGeneratorBuilder;
 
 	/**
+	 * Run a given generator function.
+	 *
+	 * @deprecated Use `generator` member instead
+	 * 
+	 * @see https://github.com/zpxp/channel-event/blob/v1/src/generator.ts
+	 * @see https://github.com/zpxp/channel-event/blob/v1/src/__tests__/events.ts#L102
+	 * @param generatorFunc
+	 */
+	runGenerator(generatorFunc: () => IterableIterator<EventIterable>): void;
+
+
+	/**
 	 * Run a given generator function and call `onCompletion` when the function returns
+
+	 * @deprecated Use `generator` member instead
+	 * 
 	 * @param generatorFunc
 	 * @param onCompletion
 	 */
