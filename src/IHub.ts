@@ -19,7 +19,7 @@ export interface IHub {
 	 * any middleware whos function name matches the `EventIterable.function`.
 	 *
 	 * Generator middleware takes 2 arguments, the first contains all the arguments that the yielded function was called with, the second is the `IChannel` instance.
-	 * Middlware must return a `Promise`, that when resolved, will return the resolved data from the `yield` statement.
+	 * Middleware must return a `Promise`, that when resolved, will return the resolved data from the `yield` statement.
 	 *
 	 * 		hub.addGeneratorMiddleware("put", function(data: EventIterable<{ type: string; data: any }>, channel: IChannel): Promise<any> {
 	 * 			return Promise.resolve(channel.send(data.value.type, data.value.data));

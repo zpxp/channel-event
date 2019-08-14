@@ -60,7 +60,7 @@ New generator actions can be defined by calling `IHub.addGlobalGeneratorMiddlewa
 any middleware whos function name matches the `EventIterable.function`.
 
 Generator middleware takes 2 arguments, the first contains all the arguments that the yielded function was called with, the second is the `IChannel` instance.
-Middlware must return a `Promise`, that when resolved, will return the resolved data from the `yield` statement.
+Middleware must return a `Promise`, that when resolved, will return the resolved data from the `yield` statement.
 
 ``` tsx
 
