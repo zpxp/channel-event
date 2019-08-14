@@ -23,8 +23,6 @@ export class IterRunner {
 	 * @param onError
 	 */
 	run(onCompletion?: (result?: any) => void, onError?: (error: any) => void): IterRunner {
-		// remove the builder from the channel as it can no longer be configured once running has started
-		this.channel.currentGeneratorBuilder = null;
 		this.doRun(undefined, onCompletion, onError);
 		return this;
 	}

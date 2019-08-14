@@ -34,6 +34,9 @@ export class GeneratorBuilder implements IGeneratorBuilder {
 	}
 
 	run() {
+		// remove the builder from the channel as it can no longer be configured once running has started
+		this.channel.currentGeneratorBuilder = null;
+		
 		let rtnData: any[] = new Array(this.generators.length);
 
 		const onCompletion = (index: number) => {
