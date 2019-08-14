@@ -3,20 +3,18 @@ import { EventIterable } from "./generator";
 import { IChannel } from "./IChannel";
 import { EventData } from "./types";
 import { GeneratorBuilder, IGeneratorBuilder } from "./generatorBuilder";
-import { GeneratorUtils } from "./utils";
+import { IterRunner } from "./runner";
 
 export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<any> } = any> implements IChannel<Actions> {
 	private onDisposes: Array<(chan?: IChannel<Actions>) => void>;
 	private listens: { [type: string]: Array<(data?: any) => any> };
 	private disposed: boolean;
-	private runningGeneratorProms: Promise<any>[];
 	readonly id: string;
 
 	constructor(private hub: _HubInternal, id: string) {
 		this.onDisposes = [];
 		this.listens = {};
 		this.disposed = false;
-		this.runningGeneratorProms = [];
 		this.id = id;
 	}
 
@@ -92,14 +90,6 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 			func(this as IChannel<Actions>);
 		}
 		this.onDisposes = [];
-		// for (let index = 0; index < this.runningGeneratorProms.length; index++) {
-		// 	const prom = this.runningGeneratorProms[index];
-		// 	if (prom instanceof ManualPromise) {
-		// 		// if its a manual prom we can cancel it
-		// 		prom.reject();
-		// 	}
-		// }
-		this.runningGeneratorProms = [];
 	}
 
 	checkSend(type: string, data: any) {
@@ -122,135 +112,13 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 		onError?: (error: any) => void
 	) {
 		const iter = generatorFunc();
-		this.processIterator(iter, undefined, onCompletion, onError);
+		return this.runIterator(iter, onCompletion, onError);
 	}
 
-	processIterator(
-		iter: IterableIterator<EventIterable>,
-		argument?: any,
-		onCompletion?: (result?: any) => void,
-		onError?: (error: any) => void
-	) {
-		let lastVal: IteratorResult<EventIterable<any>> = null;
-
-		// handle any sync errors from invokation
-		const invoker = () => {
-			if (onError) {
-				try {
-					return iter.next(argument);
-				} catch (e) {
-					onError(e);
-					return null;
-				}
-			} else {
-				return iter.next(argument);
-			}
-		};
-
-		for (let result = (lastVal = invoker()); result && !result.done; result = invoker(), lastVal = result) {
-			argument = undefined;
-			if (!result.value || !result.value.function) {
-				throw new Error("Must yield a 'IterableIterator<EventIterable>' function or value");
-			}
-
-			if (
-				!this.hub.generatorMiddlewares[result.value.function] ||
-				this.hub.generatorMiddlewares[result.value.function].length === 0
-			) {
-				throw new Error(
-					`'IterableIterator<EventIterable>' function '${
-						result.value.function
-					}' does not exist. Add middleware to 'hub.addGeneratorMiddleware'.`
-				);
-			}
-
-			const value = this.processEventIterable(result.value, 0);
-
-			if (value instanceof Error) {
-				onError && onError(value);
-				return;
-			} else if (value instanceof Promise) {
-				this.runningGeneratorProms.push(value);
-
-				let cancelled = false;
-				value
-					.then(data => {
-						const index = this.runningGeneratorProms.indexOf(value);
-						if (~index) {
-							this.runningGeneratorProms.splice(index, 1);
-						}
-						if (!cancelled && !this.disposed) {
-							return this.processIterator(iter, data.value, onCompletion, onError);
-						}
-					})
-					.catch(err => {
-						const index = this.runningGeneratorProms.indexOf(value);
-						if (~index) {
-							this.runningGeneratorProms.splice(index, 1);
-						}
-						onError && onError(err);
-						if (result.done) {
-							// prevent further iterations
-							cancelled = true;
-						} else {
-							const nextYieldResult = iter.throw(err);
-							if (
-								!this.disposed &&
-								nextYieldResult &&
-								GeneratorUtils.isIteratorResult(nextYieldResult) &&
-								!nextYieldResult.done &&
-								GeneratorUtils.isEventIterable(nextYieldResult.value)
-							) {
-								return this.processEventIterable(nextYieldResult.value, 0);
-							}
-						}
-					});
-
-				return () => {
-					cancelled = true;
-				};
-			} else {
-				argument = value.value;
-			}
-		}
-
-		if (onCompletion && lastVal) {
-			onCompletion(lastVal.value);
-		}
-	}
-
-	processEventIterable(iterable: EventIterable, index: number): EventIterable | Promise<EventIterable> {
-		if (GeneratorUtils.isIterableIterator(iterable.value)) {
-			// value is an iterator. run it
-			return new Promise<any>((resolve, reject) => {
-				this.processIterator(
-					iterable.value,
-					undefined,
-					data => {
-						iterable.value = data;
-						resolve(this.processEventIterable(iterable, index));
-					},
-					reject
-				);
-			});
-		} else if (iterable.value instanceof Promise) {
-			// value is a promise. wait till completion
-			return iterable.value.then(data => {
-				iterable.value = data;
-				return this.processEventIterable(iterable, index);
-			});
-		}
-
-		if (index < this.hub.generatorMiddlewares[iterable.function].length) {
-			const func = this.hub.generatorMiddlewares[iterable.function][index];
-			const data = func({ ...iterable }, this as IChannel);
-
-			iterable.value = data;
-
-			return this.processEventIterable(iterable, index + 1);
-		} else {
-			return iterable;
-		}
+	runIterator(iter: IterableIterator<EventIterable>, onCompletion?: (result?: any) => void, onError?: (error: any) => void) {
+		const runner = new IterRunner(iter, this, this.hub);
+		runner.run(onCompletion, onError);
+		return runner.cancel
 	}
 }
 

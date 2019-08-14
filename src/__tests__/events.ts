@@ -508,35 +508,68 @@ describe("events", () => {
 
 			function* test(): IterableIterator<EventIterable> {
 				mock();
-				console.log(222);
 				if (count < 10) {
+					yield put("test");
 					count++;
 					yield delay(2);
 					throw new Error("err");
-					// yield call(
-					// 	() =>
-					// 		new Promise((resolve, reject) => {
-					// 			setTimeout(() => {
-					// 				reject("err");
-					// 			});
-					// 		})
-					// );
 				}
 			}
 
 			function* check(): IterableIterator<EventIterable> {
 				for (let index = 0; index < 10; index++) {
 					yield take("test");
-					console.log(count);
 				}
 				expect(mock).toBeCalledTimes(10);
 				resolve();
 			}
 
 			channel.generator
+				.addGenerator(check)
 				.addGenerator(test)
 				.restartOnAsyncError()
 				.run();
 		});
-	}, 400000);
+	});
+
+	test("generator restart call", () => {
+		const hub = createHub();
+		const channel = hub.newChannel();
+
+		return new Promise(resolve => {
+			let count = 0;
+			const mock = jest.fn();
+
+			function* test(): IterableIterator<EventIterable> {
+				mock();
+				if (count < 10) {
+					yield put("test");
+					count++;
+
+					yield call(
+						() =>
+							new Promise((resolve, reject) => {
+								setTimeout(() => {
+									reject("err");
+								});
+							})
+					);
+				}
+			}
+
+			function* check(): IterableIterator<EventIterable> {
+				for (let index = 0; index < 10; index++) {
+					yield take("test");
+				}
+				expect(mock).toBeCalledTimes(10);
+				resolve();
+			}
+
+			channel.generator
+				.addGenerator(check)
+				.addGenerator(test)
+				.restartOnAsyncError()
+				.run();
+		});
+	});
 });

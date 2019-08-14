@@ -47,7 +47,7 @@ export const generatorImplements = {
 				const result = data.value.func.apply(null, data.value.args);
 				if (GeneratorUtils.isIterableIterator(result)) {
 					// save cb to internal cancel func
-					cancel = channel.processIterator(result);
+					cancel = channel.runIterator(result);
 				}
 			}
 		});
