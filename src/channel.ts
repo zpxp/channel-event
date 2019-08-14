@@ -11,6 +11,8 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 	private disposed: boolean;
 	readonly id: string;
 
+	currentGeneratorBuilder: GeneratorBuilder;
+
 	constructor(private hub: _HubInternal, id: string) {
 		this.onDisposes = [];
 		this.listens = {};
@@ -19,7 +21,17 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 	}
 
 	get generator(): IGeneratorBuilder {
-		return new GeneratorBuilder(this);
+		// hold a reference to the current builder object until the user calls GeneratorBuilder.run.
+		// once run is called, currentGeneratorBuilder is set to null so a new GeneratorBuilder instance is
+		// created when accessing this property
+		if (!this.currentGeneratorBuilder) {
+			this.currentGeneratorBuilder = new GeneratorBuilder(this);
+		}
+		return this.currentGeneratorBuilder;
+	}
+
+	get isDisposed() {
+		return this.disposed;
 	}
 
 	send<T extends keyof Actions>(type: T, data?: Actions[T]) {
@@ -28,10 +40,12 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 		}
 
 		const returnData = this.hub.handleSend(type as string, data, this as IChannel);
+		// if return data contians the internal member __CHANNEL_RTN then its a dictionary of return values from listeners
 		if (returnData && "__CHANNEL_RTN" in returnData) {
 			// is a standard return object dictionary
 			// remove dictoinary marker member
 			delete returnData.__CHANNEL_RTN;
+			// only return the object if one or more listeners returned data otherwise return null
 			return Object.keys(returnData).length ? returnData : null;
 		} else {
 			// data returned is not something we recognise, just return it. It was overriden in event middleware
@@ -115,7 +129,12 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 		return this.runIterator(iter, onCompletion, onError);
 	}
 
+	/** Returns a cancel function */
 	runIterator(iter: IterableIterator<EventIterable>, onCompletion?: (result?: any) => void, onError?: (error: any) => void): () => void {
+		if (this.disposed) {
+			throw new Error("Channel disposed");
+		}
+
 		const runner = new IterRunner(iter, this, this.hub);
 		runner.run(onCompletion, onError);
 		return runner.cancel;

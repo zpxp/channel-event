@@ -18,11 +18,13 @@ export class IterRunner {
 	}
 
 	/**
-	 * Run the current iterator	
-	 * @param onCompletion 
-	 * @param onError 
+	 * Run the current iterator
+	 * @param onCompletion
+	 * @param onError
 	 */
 	run(onCompletion?: (result?: any) => void, onError?: (error: any) => void): IterRunner {
+		// remove the builder from the channel as it can no longer be configured once running has started
+		this.channel.currentGeneratorBuilder = null;
 		this.doRun(undefined, onCompletion, onError);
 		return this;
 	}
@@ -31,14 +33,19 @@ export class IterRunner {
 		this.cancelled = true;
 	}
 
+	/** true if not cancelled and the channel is not disposed */
+	get canProcessNextIteration() {
+		return !this.cancelled && !this.channel.isDisposed;
+	}
+
 	/**
 	 * Run all iters in the stack
 	 * @param argument Value to return from left side of `yeild` keyword
-	 * @param onCompletion 
-	 * @param onError 
+	 * @param onCompletion
+	 * @param onError
 	 */
 	private doRun(argument?: any, onCompletion?: (result?: any) => void, onError?: (error: any) => void) {
-		if (!this.cancelled) {
+		if (this.canProcessNextIteration) {
 			if (this.iterStack.length > 0) {
 				const iter = this.iterStack[this.iterStack.length - 1];
 				try {
@@ -56,9 +63,9 @@ export class IterRunner {
 
 	/**
 	 * Run the current iter and recursivly process the iter tree/promises if they are returned
-	 * @param val 
-	 * @param onCompletion 
-	 * @param onError 
+	 * @param val
+	 * @param onCompletion
+	 * @param onError
 	 */
 	private handleIterValue(val: any, onCompletion?: (result?: any) => void, onError?: (error: any) => void) {
 		if (val instanceof Promise) {
@@ -80,11 +87,11 @@ export class IterRunner {
 
 	/**
 	 * Run next iteration of the current iter on the top of the stack
-	 * @param iter 
+	 * @param iter
 	 * @param argument argument to return out of left side of `yeild` keyword
 	 */
 	private next(iter: IterableIterator<EventIterable>, argument?: any) {
-		if (this.cancelled) {
+		if (!this.canProcessNextIteration) {
 			return;
 		}
 
@@ -121,38 +128,39 @@ export class IterRunner {
 
 	/**
 	 * Try and throw inside the top most iter and propogate up the iter stack until it is handled successfuly
-	 * @param err 
+	 * @param err
 	 */
 	private handleIterError(err: Error): EventIterable | Promise<any> {
-		if (this.iterStack.length > 0) {
-			const iter = this.iterStack[this.iterStack.length - 1];
-			try {
-				const nextYieldResult = iter.throw(err);
-				if (
-					nextYieldResult &&
-					GeneratorUtils.isIteratorResult(nextYieldResult) &&
-					!nextYieldResult.done &&
-					GeneratorUtils.isEventIterable(nextYieldResult.value)
-				) {
-					const value = this.processEventIterable(nextYieldResult.value, 0);
-					if (value instanceof Error) {
-						return this.handleIterError(value);
+		if (this.canProcessNextIteration) {
+			if (this.iterStack.length > 0) {
+				const iter = this.iterStack[this.iterStack.length - 1];
+				try {
+					const nextYieldResult = iter.throw(err);
+					if (
+						nextYieldResult &&
+						GeneratorUtils.isIteratorResult(nextYieldResult) &&
+						!nextYieldResult.done &&
+						GeneratorUtils.isEventIterable(nextYieldResult.value)
+					) {
+						const value = this.processEventIterable(nextYieldResult.value, 0);
+						if (value instanceof Error) {
+							return this.handleIterError(value);
+						} else {
+							return value;
+						}
 					} else {
-						return value;
+						throw err;
 					}
-				} else {
-					throw err;
+				} catch (e) {
+					// the current iter cannot handle the error. propogate up
+					this.iterStack.pop();
+					return this.handleIterError(err);
 				}
-			} catch (e) {
-				// the current iter cannot handle the error. propogate up
-				this.iterStack.pop();
-				return this.handleIterError(err);
+			} else {
+				throw err;
 			}
-		} else {
-			throw err;
 		}
 	}
-
 
 	/**
 	 * Call all generator middleware for the current `EventIterable` event

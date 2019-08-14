@@ -10,11 +10,12 @@ export const generatorImplements = {
 	 * @param channel
 	 */
 	take: function(data: EventIterable<string | string[]>, channel: IChannel): Promise<any> {
-		return new Promise(resolve => {
+		return new Promise((resolve, reject) => {
 			const unsub = channel.listen(data.value, result => {
 				unsub();
 				resolve(result);
 			});
+			channel.onDispose(reject);
 		});
 	},
 

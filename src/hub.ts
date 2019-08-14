@@ -67,7 +67,7 @@ class _HubInternal implements IHub {
 
 		let currentIndex = 0;
 
-		// first run all middleware then incoke listeners and pass result data back up the middleware
+		// first run all middleware then invoke listeners and pass result data back up the middleware
 		const handleNextMiddleware = (context: EventMiddlewareContext) => {
 			if (currentIndex < this.eventMiddleware.length) {
 				const index = currentIndex++;
