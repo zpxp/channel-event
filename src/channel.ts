@@ -110,15 +110,15 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 		generatorFunc: () => IterableIterator<EventIterable>,
 		onCompletion?: (result?: any) => void,
 		onError?: (error: any) => void
-	) {
+	): () => void {
 		const iter = generatorFunc();
 		return this.runIterator(iter, onCompletion, onError);
 	}
 
-	runIterator(iter: IterableIterator<EventIterable>, onCompletion?: (result?: any) => void, onError?: (error: any) => void) {
+	runIterator(iter: IterableIterator<EventIterable>, onCompletion?: (result?: any) => void, onError?: (error: any) => void): () => void {
 		const runner = new IterRunner(iter, this, this.hub);
 		runner.run(onCompletion, onError);
-		return runner.cancel
+		return runner.cancel;
 	}
 }
 
