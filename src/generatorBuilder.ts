@@ -61,7 +61,11 @@ export class GeneratorBuilder implements IGeneratorBuilder {
 						this.errorCallbacks.forEach(x => x(err));
 					});
 				} catch (e) {
-					this.errorCallbacks.forEach(x => x(e));
+					if (this.errorCallbacks.length) {
+						this.errorCallbacks.forEach(x => x(e));
+					} else {
+						throw e;
+					}
 				}
 			}
 		} else {
@@ -69,10 +73,18 @@ export class GeneratorBuilder implements IGeneratorBuilder {
 				const generator = this.generators[index];
 				try {
 					this.channel.runGenerator(generator, onCompletion(index), err => {
-						this.errorCallbacks.forEach(x => x(err));
+						if (this.errorCallbacks.length) {
+							this.errorCallbacks.forEach(x => x(err));
+						} else {
+							throw err;
+						}
 					});
 				} catch (e) {
-					this.errorCallbacks.forEach(x => x(e));
+					if (this.errorCallbacks.length) {
+						this.errorCallbacks.forEach(x => x(e));
+					} else {
+						throw e;
+					}
 				}
 			}
 		}

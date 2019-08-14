@@ -487,6 +487,17 @@ describe("events", () => {
 		expect(mock).toBeCalledWith("err");
 	});
 
+	test("generator err2", () => {
+		const hub = createHub();
+		const channel = hub.newChannel();
+
+		function* test(): IterableIterator<EventIterable> {
+			throw new Error("err");
+		}
+
+		expect(() => channel.generator.addGenerator(test).run()).toThrowError("err");
+	});
+
 	test("generator restart", () => {
 		const hub = createHub();
 		const channel = hub.newChannel();
@@ -500,7 +511,7 @@ describe("events", () => {
 				console.log(222);
 				if (count < 10) {
 					count++;
-					yield delay(1);
+					yield delay(2);
 					throw new Error("err");
 					// yield call(
 					// 	() =>

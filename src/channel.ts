@@ -142,6 +142,7 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 				} catch (e) {
 					onError(e);
 					throw e;
+					// return { done: true, value: e };
 				}
 			} else {
 				return iter.next(argument);
@@ -174,17 +175,17 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 				this.runningGeneratorProms.push(value);
 
 				let cancelled = false;
-				value.then(
-					data => {
+				value
+					.then(data => {
 						const index = this.runningGeneratorProms.indexOf(value);
 						if (~index) {
 							this.runningGeneratorProms.splice(index, 1);
 						}
 						if (!cancelled && !this.disposed) {
-							this.processIterator(iter, data.value, onCompletion, onError);
+							return this.processIterator(iter, data.value, onCompletion, onError);
 						}
-					},
-					err => {
+					})
+					.catch(err => {
 						const index = this.runningGeneratorProms.indexOf(value);
 						if (~index) {
 							this.runningGeneratorProms.splice(index, 1);
@@ -202,11 +203,10 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 								!nextYieldResult.done &&
 								GeneratorUtils.isEventIterable(nextYieldResult.value)
 							) {
-								this.processEventIterable(nextYieldResult.value, 0);
+								return this.processEventIterable(nextYieldResult.value, 0);
 							}
 						}
-					}
-				);
+					});
 
 				return () => {
 					cancelled = true;
@@ -224,7 +224,7 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 	processEventIterable(iterable: EventIterable, index: number): EventIterable | Promise<EventIterable> {
 		if (GeneratorUtils.isIterableIterator(iterable.value)) {
 			// value is an iterator. run it
-			const proms = new Promise<any>((resolve, reject) => {
+			return new Promise<any>((resolve, reject) => {
 				this.processIterator(
 					iterable.value,
 					undefined,
@@ -235,10 +235,8 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 					reject
 				);
 			});
-			(window as any).dddd = proms
-			return proms;
 		} else if (iterable.value instanceof Promise) {
-			// value is a promise. wit till completion
+			// value is a promise. wait till completion
 			return iterable.value.then(data => {
 				iterable.value = data;
 				return this.processEventIterable(iterable, index);
