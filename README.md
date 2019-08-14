@@ -164,3 +164,13 @@ export declare function takeLast(type: string | string[], func: (data?: any) => 
 
 
 ```
+
+### Extensions, middleware
+
+Library | Description
+--- | ---
+ [channel-store](https://github.com/zpxp/channel-store) | An event middleware that creates an ambient state for channel hubs that can be accessed anywhere that a channel exists
+ [react-channel-event](https://github.com/zpxp/react-channel-event) | A react provider and HoC wrapper for `channel-event`
+ [react-channel-store](https://github.com/zpxp/react-channel-store) | A react provider and HoC wrapper for `channel-store`
+
+
