@@ -32,6 +32,14 @@ const channel2 = hub.newChannel("channel id");
 
 ```
 
+Call `dispose` when finished using
+
+``` tsx 
+channel.dispose();
+// or
+hub.dispose(); // calls dispose on every channel inside the hub
+```
+
 ### Event middleware
 
 Middleware can be added to the event chain to change the fundamental behaviour of events. Event middleware is added to the hub with `addEventMiddleware`.
