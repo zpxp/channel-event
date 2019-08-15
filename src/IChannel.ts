@@ -44,8 +44,6 @@ export interface IChannel<Actions extends { [type: string]: IChannelMessage<any>
 	/**
 	 * Run a given generator function.
 	 *
-	 * @deprecated Use `generator` member instead
-	 *
 	 * @see https://github.com/zpxp/channel-event/blob/v1/src/generator.ts
 	 * @see https://github.com/zpxp/channel-event/blob/v1/src/__tests__/events.ts#L102
 	 * @param generatorFunc
@@ -57,8 +55,6 @@ export interface IChannel<Actions extends { [type: string]: IChannelMessage<any>
 	/**
 	 * Run a given generator function and call `onCompletion` when the function returns
 
-	 * @deprecated Use `generator` member instead
-	 * 
 	 * @param generatorFunc
 	 * @param onCompletion
 	 * 
