@@ -1,5 +1,7 @@
 # channel-event
 
+![Bundlephobia gzip + minified](https://badgen.net/bundlephobia/minzip/channel-event)
+
 A simple javascript event channel library that can run generator functions, allows for async data flows and cross component communication.
 Events are scoped to hub instances which means that the scale of the event channels can be controlled and event collisions are non existant. This also allows for easy debugging. 
 Typescript typings are built in, however it will still work in vanila javascript 
