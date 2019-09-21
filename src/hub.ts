@@ -135,3 +135,10 @@ for (const key in generatorImplements) {
 }
 
 const defaultOptions: CreateHubOptions = {};
+
+/**
+ * Same as `addGeneratorMiddleware` but adds to all future `IHub` instances in the program. Existing `IHub` instances will NOT recieve the middleware
+ * @param functionName The name of this generator middleware to be added
+ * @param middleware The middleware implementation that takes 1-2 args: The `EventIterable` that was yielded, in the generator, and a reference to the `IChannel` object
+ */
+export const addGlobalGeneratorMiddleware: IHub["addGlobalGeneratorMiddleware"] = _HubInternal.addGlobalGeneratorMiddleware;
