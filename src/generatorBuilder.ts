@@ -6,6 +6,7 @@ export class GeneratorBuilder implements IGeneratorBuilder {
 	private completionCallbacks: Array<(result?: any) => void>;
 	private errorCallbacks: Array<(error?: any) => void>;
 	private restartAsyncError: boolean;
+	private thisArgs: { thisArg: any; argArray: any[] };
 
 	constructor(private channel: _ChannelInternal) {
 		this.generators = [];
@@ -33,11 +34,17 @@ export class GeneratorBuilder implements IGeneratorBuilder {
 		return this;
 	}
 
+	bindThis(thisArg: any, ...argArray: any[]) {
+		this.thisArgs = { thisArg, argArray };
+		return this;
+	}
+
 	run() {
 		// remove the builder from the channel as it can no longer be configured once running has started
 		this.channel.currentGeneratorBuilder = null;
-		
+
 		let rtnData: any[] = new Array(this.generators.length);
+		const hasBinder = !!this.thisArgs;
 
 		const onCompletion = (index: number) => {
 			return (data: any) => {
@@ -58,7 +65,10 @@ export class GeneratorBuilder implements IGeneratorBuilder {
 
 		if (this.restartAsyncError) {
 			for (let index = 0; index < this.generators.length; index++) {
-				const generator = this.generators[index];
+				const generator = hasBinder
+					? this.generators[index].bind(this.thisArgs.thisArg, ...this.thisArgs.argArray)
+					: this.generators[index];
+
 				try {
 					this.channel.runGenerator(tryFork(generator, onCompletion(index)), null, err => {
 						this.errorCallbacks.forEach(x => x(err));
@@ -73,7 +83,10 @@ export class GeneratorBuilder implements IGeneratorBuilder {
 			}
 		} else {
 			for (let index = 0; index < this.generators.length; index++) {
-				const generator = this.generators[index];
+				const generator = hasBinder
+					? this.generators[index].bind(this.thisArgs.thisArg, ...this.thisArgs.argArray)
+					: this.generators[index];
+
 				try {
 					this.channel.runGenerator(generator, onCompletion(index), err => {
 						if (this.errorCallbacks.length) {
@@ -104,7 +117,7 @@ export interface IGeneratorBuilder {
 	 * Add a generator function to the current configuration to be invoked when `IGeneratorBuilder.run` is called
 	 * @param generatorFunc Generator function to invoke
 	 */
-	addGenerator(generatorFunc: () => IterableIterator<EventIterable>): IGeneratorBuilder;
+	addGenerator(generatorFunc: (...args: any[]) => IterableIterator<EventIterable>): IGeneratorBuilder;
 
 	/**
 	 * Add a callback function to invoke when all generators are run to completion
@@ -117,6 +130,14 @@ export interface IGeneratorBuilder {
 	 * @param callback
 	 */
 	addErrorCallback(callback: (error?: any) => void): IGeneratorBuilder;
+
+	/**
+	 * For all given generator functions, bind `thisArg` to the value of `this` and optionally has the specified initial parameters.
+	 * Subsequent calls to this function will override previous calls for this `IGeneratorBuilder` instance
+	 * @param thisArg An object to which the this keyword can refer inside all the generator functions.
+	 * @param argArray A list of arguments to be passed to all the generator functions.
+	 */
+	bindThis(thisArg: any, ...argArray: any[]): IGeneratorBuilder;
 
 	/**
 	 * Restart generators when they throw an async error. An async error is any error after the current stack frame. Sync errors are not caught because restarting on sync errors

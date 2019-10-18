@@ -572,4 +572,20 @@ describe("events", () => {
 				.run();
 		});
 	});
+
+	test("generator this args", () => {
+		const hub = createHub();
+		const channel = hub.newChannel();
+
+		return new Promise(resolve => {
+			channel.generator
+				.addGenerator(function*(this: number, defArg: string): IterableIterator<EventIterable> {
+					expect(this).toBe(2);
+					expect(defArg).toBe("asd");
+					resolve();
+				})
+				.bindThis(2, "asd")
+				.run();
+		});
+	});
 });
