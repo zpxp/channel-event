@@ -75,8 +75,7 @@ function generateWebBuild(entry, outputFolder, lib, overrideOpts) {
 			strictExportPresence: true,
 			rules: [
 				{ parser: { requireEnsure: false } },
-				// First, run the linter.
-				// It's important to do this before Babel processes the JS.
+
 				{
 					test: /\.tsx?$/,
 					enforce: "pre",
@@ -87,6 +86,17 @@ function generateWebBuild(entry, outputFolder, lib, overrideOpts) {
 							jsx: "react"
 						}
 					})
+				},
+				// First, run the linter.
+				{
+					test: /\.tsx?$/,
+					enforce: "pre",
+					exclude: /node_modules/,
+					loader: "eslint-loader",
+					include: paths.appSrc,
+					options: {
+						failOnError: true
+					}
 				},
 				{
 					// "oneOf" will traverse all following loaders until one will
@@ -228,10 +238,18 @@ function generateNodeBuild(entry, outputFolder, lib, overrideOpts) {
 			rules: [
 				{ parser: { requireEnsure: false } },
 				// First, run the linter.
-				// It's important to do this before Babel processes the JS.
 				{
 					test: /\.tsx?$/,
 					enforce: "pre",
+					exclude: /node_modules/,
+					loader: "eslint-loader",
+					include: paths.appSrc,
+					options: {
+						failOnError: true
+					}
+				},
+				{
+					test: /\.tsx?$/,
 					loader: "ts-loader",
 					options: PnpWebpackPlugin.tsLoaderOptions({
 						compilerOptions: {

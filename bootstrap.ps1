@@ -1,9 +1,5 @@
 #!/usr/bin/pwsh
 
-$react = "`^16.8.6"
-$reactdom = "`^16.8.6"
-$reactcssmods = "`^4.7.9"
-
 
 yarn init --yes
 
@@ -48,6 +44,11 @@ babel-core@6.26.3 `
 babel-jest@24.7.1 `
 babel-loader@8.0.5 `
 babel-polyfill@6.26.0 `
+@typescript-eslint/eslint-plugin `
+@typescript-eslint/parser `
+eslint `
+eslint-loader `
+eslint-plugin-react `
 chalk@`^2.4.2 `
 css-loader@`^2.1.1 `
 file-loader@`^3.0.1 `
@@ -67,7 +68,7 @@ postcss-preset-env@`^6.6.0 `
 sass-loader@`^7.1.0 `
 terser-webpack-plugin@`^1.2.3 `
 ts-loader@`^5.3.3 `
-typescript@`^3.4.3 `
+typescript@ `
 webpack@4.30.0
 
 $confirmation = Read-Host "Add react libs?  [y/n]"
@@ -79,12 +80,12 @@ while($confirmation -ne "y" -and $confirmation -ne "n")
 
 if ($confirmation -eq 'y') {
 	# add react based libs
-	yarn add -D @types/react@`^16.8.8 `
-	@types/react-css-modules@`^4.6.2 `
-	@types/react-dom@`^16.8.4 
+	yarn add -D @types/react `
+	@types/react-css-modules `
+	@types/react-dom 
 	
 	# add to deps
-	yarn add "react@$react" "react-css-modules@$reactcssmods" "react-dom@$reactdom"
+	yarn add react react-css-modules react-dom
 }
 
 
