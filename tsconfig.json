@@ -16,9 +16,8 @@
 		"baseUrl": ".",
 		"types": ["jest"],
 		"lib": [
-			"es2015",
 			"dom",
-			"es2016",
+			"esnext",
 			"webworker"
 		]
 	},
