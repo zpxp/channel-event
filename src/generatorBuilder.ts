@@ -144,8 +144,9 @@ export interface IGeneratorBuilder {
 	/**
 	 * Restart generators when they throw an async error. An async error is any error after the current stack frame. Sync errors are not caught because restarting on sync errors
 	 * would result in infinite loops
+	 * @param msTimeout Restart failed generators after a timeout. Defaults to zero
 	 */
-	restartOnAsyncError(): IGeneratorBuilder;
+	restartOnAsyncError(msTimeout?: number): IGeneratorBuilder;
 }
 
 function tryFork(generator: () => IterableIterator<EventIterable>, msTimeout: number, callback: (data: any) => void) {
