@@ -375,7 +375,7 @@ describe("events", () => {
 				expect(mock).toBeCalledTimes(1);
 				expect(mock2).toBeCalledTimes(10);
 				resolve();
-			}, 200);
+			}, 300);
 		});
 	});
 
@@ -411,7 +411,7 @@ describe("events", () => {
 				expect(mock).toBeCalledTimes(10);
 				expect(mock2).toBeCalledTimes(10);
 				resolve();
-			}, 200);
+			}, 300);
 		});
 	});
 
