@@ -433,7 +433,7 @@ describe("events", () => {
 			function* testfunc(count: number): IterableIterator<EventIterable> {
 				for (let index = 0; index < count; index++) {
 					yield put("test", 2);
-					yield delay(1);
+					// yield delay(1);
 				}
 				return 77;
 			}
