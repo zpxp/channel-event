@@ -1,3 +1,5 @@
+import { EventData } from "./types";
+
 export interface EventIterable<T = any> {
 	function: string;
 	value: T;
@@ -19,7 +21,10 @@ export function take(type: string | string[]): EventIterable {
  * @param type action type
  * @param data optional data to send to all listeners
  */
-export function put(type: string, data?: any): EventIterable {
+export function put<Actions extends { [type: string]: any } = any, T extends keyof Actions = keyof Actions>(
+	type: T,
+	data?: Actions[T]
+): EventIterable {
 	return {
 		function: "put",
 		value: { type, data }
@@ -67,7 +72,10 @@ export function delay(durationMs: number): EventIterable {
  * @param type Call func whenever this type is dispatched
  * @param func
  */
-export function takeLatest(type: string | string[], func: (data?: any) => IterableIterator<EventIterable>): EventIterable {
+export function takeLatest<Actions extends { [type: string]: any } = any, T extends keyof Actions = keyof Actions>(
+	type: T | T[],
+	func: (data?: EventData<Actions[T]>) => IterableIterator<EventIterable>
+): EventIterable {
 	return {
 		function: "takeLatest",
 		value: { type, func }
@@ -79,20 +87,25 @@ export function takeLatest(type: string | string[], func: (data?: any) => Iterab
  * @param type Call func whenever this type is dispatched
  * @param func
  */
-export function takeEvery(type: string | string[], func: (data?: any) => IterableIterator<EventIterable>): EventIterable {
+export function takeEvery<Actions extends { [type: string]: any } = any, T extends keyof Actions = keyof Actions>(
+	type: T | T[],
+	func: (data?: EventData<Actions[T]>) => IterableIterator<EventIterable>
+): EventIterable {
 	return {
 		function: "takeEvery",
 		value: { type, func }
 	};
 }
 
-
 /**
  * Call `func` whenever `type` is dispatched if no instances of `func` are running
  * @param type Call func whenever this type is dispatched
  * @param func
  */
-export function takeLast(type: string | string[], func: (data?: any) => IterableIterator<EventIterable>): EventIterable {
+export function takeLast<Actions extends { [type: string]: any } = any, T extends keyof Actions = keyof Actions>(
+	type: T | T[],
+	func: (data?: EventData<Actions[T]>) => IterableIterator<EventIterable>
+): EventIterable {
 	return {
 		function: "takeLast",
 		value: { type, func }

@@ -70,14 +70,34 @@ export class IterRunner {
 			val.then(val => {
 				this.doRun(val, onCompletion, onError);
 			}).catch(err => {
-				const val = this.handleIterError(err);
+				let val = null;
+				try {
+					val = this.handleIterError(err);
+				} catch (e) {
+					if (onError) {
+						onError(e);
+						return;
+					} else {
+						throw e;
+					}
+				}
 				this.handleIterValue(val, onCompletion, onError);
 			});
 		} else {
 			try {
 				this.doRun(val, onCompletion, onError);
 			} catch (err) {
-				const val = this.handleIterError(err);
+				let val = null;
+				try {
+					val = this.handleIterError(err);
+				} catch (e) {
+					if (onError) {
+						onError(e);
+						return;
+					} else {
+						throw e;
+					}
+				}
 				this.handleIterValue(val, onCompletion, onError);
 			}
 		}
@@ -108,9 +128,7 @@ export class IterRunner {
 				this.hub.generatorMiddlewares[result.value.function].length === 0
 			) {
 				throw new Error(
-					`'IterableIterator<EventIterable>' function '${
-						result.value.function
-					}' does not exist. Add middleware to 'hub.addGeneratorMiddleware'.`
+					`'IterableIterator<EventIterable>' function '${result.value.function}' does not exist. Add middleware to 'hub.addGeneratorMiddleware'.`
 				);
 			}
 

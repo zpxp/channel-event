@@ -1,6 +1,7 @@
 import { createHub } from "../hub";
 import { EventIterable, take, put, call, takeLatest, delay, fork, takeEvery, takeLast } from "../generator";
 import { Timer } from "./timer.notest";
+import { EventData } from "src/types";
 
 describe("events", () => {
 	test("Should resolve", () => {
@@ -350,7 +351,7 @@ describe("events", () => {
 		const mock2 = jest.fn();
 		return new Promise(resolve => {
 			channel.runGenerator(function*(): IterableIterator<EventIterable> {
-				yield takeLatest("test", function*(data: number) {
+				yield takeLatest("test", function*(data: EventData<number>) {
 					mock2();
 					yield delay(100);
 					mock();
@@ -386,7 +387,7 @@ describe("events", () => {
 		const mock2 = jest.fn();
 		return new Promise(resolve => {
 			channel.runGenerator(function*(): IterableIterator<EventIterable> {
-				yield takeEvery("test", function*(data: number) {
+				yield takeEvery("test", function*(data) {
 					mock2();
 					yield delay(100);
 					mock();
@@ -422,7 +423,7 @@ describe("events", () => {
 		const mock2 = jest.fn();
 		return new Promise(resolve => {
 			channel.runGenerator(function*(): IterableIterator<EventIterable> {
-				yield takeLast("test", function*(data: number) {
+				yield takeLast("test", function*(data) {
 					mock2();
 					yield delay(100);
 					mock();
@@ -485,6 +486,34 @@ describe("events", () => {
 			.run();
 
 		expect(mock).toBeCalledWith("err");
+	});
+
+	test("generator err async", () => {
+		const hub = createHub();
+		const channel = hub.newChannel();
+
+		return new Promise(resolve => {
+			function* test(): IterableIterator<EventIterable> {
+				yield delay(10);
+				throw new Error("err");
+			}
+
+			const mock = jest.fn();
+
+			function* resolver(): IterableIterator<EventIterable> {
+				yield delay(12);
+				expect(mock).toBeCalledWith("err");
+				resolve();
+			}
+
+			channel.generator
+				.addGenerator(test)
+				.addGenerator(resolver)
+				.addErrorCallback((err: Error) => {
+					mock(err.message);
+				})
+				.run();
+		});
 	});
 
 	test("generator err2", () => {

@@ -1,4 +1,4 @@
-import { call, EventIterable, fork } from "./generator";
+import { call, EventIterable, fork, delay } from "./generator";
 import { _ChannelInternal } from "./channel";
 
 export class GeneratorBuilder implements IGeneratorBuilder {
@@ -7,6 +7,7 @@ export class GeneratorBuilder implements IGeneratorBuilder {
 	private errorCallbacks: Array<(error?: any) => void>;
 	private restartAsyncError: boolean;
 	private thisArgs: { thisArg: any; argArray: any[] };
+	private restartMsTimeout: number;
 
 	constructor(private channel: _ChannelInternal) {
 		this.generators = [];
@@ -24,8 +25,9 @@ export class GeneratorBuilder implements IGeneratorBuilder {
 		return this;
 	}
 
-	restartOnAsyncError() {
+	restartOnAsyncError(msTimeout?: number) {
 		this.restartAsyncError = true;
+		this.restartMsTimeout = msTimeout;
 		return this;
 	}
 
@@ -70,7 +72,7 @@ export class GeneratorBuilder implements IGeneratorBuilder {
 					: this.generators[index];
 
 				try {
-					this.channel.runGenerator(tryFork(generator, onCompletion(index)), null, err => {
+					this.channel.runGenerator(tryFork(generator, this.restartMsTimeout, onCompletion(index)), null, err => {
 						this.errorCallbacks.forEach(x => x(err));
 					});
 				} catch (e) {
@@ -146,7 +148,7 @@ export interface IGeneratorBuilder {
 	restartOnAsyncError(): IGeneratorBuilder;
 }
 
-function tryFork(generator: () => IterableIterator<EventIterable>, callback: (data: any) => void) {
+function tryFork(generator: () => IterableIterator<EventIterable>, msTimeout: number, callback: (data: any) => void) {
 	function* runner() {
 		let isSyncError = false;
 		while (!isSyncError) {
@@ -161,6 +163,9 @@ function tryFork(generator: () => IterableIterator<EventIterable>, callback: (da
 				console.error("Generator Error:", e);
 				if (isSyncError) {
 					throw e;
+				} else if (msTimeout && msTimeout > 0) {
+					// restart after amount of time
+					yield delay(msTimeout);
 				}
 			}
 		}
