@@ -3,6 +3,7 @@ import { EventIterable } from "./generator";
 import { IChannelMessage } from "./channel";
 import { EventData } from "./types";
 import { IGeneratorBuilder } from "./generatorBuilder";
+import { IHub } from "./IHub";
 
 export interface IChannel<Actions extends { [type: string]: IChannelMessage<any> } = any> {
 	readonly id: string;
@@ -40,6 +41,9 @@ export interface IChannel<Actions extends { [type: string]: IChannelMessage<any>
 
 	/** true when this channel is disposed */
 	readonly isDisposed: boolean;
+	
+	/** The hub that this channel belongs to */
+	readonly hub: IHub;
 
 	/**
 	 * Run a given generator function.

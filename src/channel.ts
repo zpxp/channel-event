@@ -4,6 +4,7 @@ import { IChannel } from "./IChannel";
 import { EventData } from "./types";
 import { GeneratorBuilder, IGeneratorBuilder } from "./generatorBuilder";
 import { IterRunner } from "./runner";
+import { IHub } from "./IHub";
 
 export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<any> } = any> implements IChannel<Actions> {
 	private onDisposes: Array<(chan?: IChannel<Actions>) => void>;
@@ -13,7 +14,7 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 
 	currentGeneratorBuilder: GeneratorBuilder;
 
-	constructor(private hub: _HubInternal, id: string) {
+	constructor(private _hub: _HubInternal, id: string) {
 		this.onDisposes = [];
 		this.listens = {};
 		this.disposed = false;
@@ -34,12 +35,16 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 		return this.disposed;
 	}
 
+	get hub(): IHub {
+		return this._hub;
+	}
+
 	send<T extends keyof Actions>(type: T, data?: Actions[T]) {
 		if (this.disposed) {
 			throw new Error("Channel disposed");
 		}
 
-		const returnData = this.hub.handleSend(type as string, data, this as IChannel);
+		const returnData = this._hub.handleSend(type as string, data, this as IChannel);
 		// if return data contians the internal member __CHANNEL_RTN then its a dictionary of return values from listeners
 		if (returnData && "__CHANNEL_RTN" in returnData) {
 			// is a standard return object dictionary
@@ -135,7 +140,7 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 			throw new Error("Channel disposed");
 		}
 
-		const runner = new IterRunner(iter, this, this.hub);
+		const runner = new IterRunner(iter, this, this._hub);
 		runner.run(onCompletion, onError);
 		return runner.cancel;
 	}
