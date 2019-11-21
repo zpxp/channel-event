@@ -20,6 +20,13 @@ describe("events", () => {
 		expect(hub.newChannel()).toEqual(expect.anything());
 	});
 
+	test("Channel hub", () => {
+		const hub = createHub();
+		const chan = hub.newChannel();
+
+		expect(chan.hub).toEqual(hub);
+	});
+
 	test("listen", () => {
 		const hub = createHub();
 		const channel = hub.newChannel();
