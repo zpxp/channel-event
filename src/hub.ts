@@ -5,6 +5,8 @@ import { IHub } from "./IHub";
 import { IChannel } from "./IChannel";
 import { EventMiddleware, EventMiddlewareContext } from "./types";
 
+export const channelReturnSym = typeof Symbol === "undefined" ? "__CHANNEL_RTN" : Symbol.for("channel-event/__CHANNEL_RTN");
+
 class _HubInternal implements IHub {
 	private static globalGeneratorMiddlewares: { [name: string]: Array<(args: EventIterable, channel: IChannel) => Promise<any>> } = {};
 	private _generatorMiddlewares: { [name: string]: Array<(args: EventIterable, channel: IChannel) => Promise<any>> };
@@ -75,7 +77,7 @@ class _HubInternal implements IHub {
 			} else {
 				// at end. invoke listeners
 
-				let returnData = { __CHANNEL_RTN: true };
+				let returnData = { [channelReturnSym]: true };
 				for (let index = 0; index < this.channels.length; index++) {
 					const chann = this.channels[index];
 					returnData = { ...returnData, ...chann.checkSend(context.type, context.payload) };

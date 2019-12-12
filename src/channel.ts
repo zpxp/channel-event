@@ -1,4 +1,4 @@
-import { t_HubInternal as _HubInternal } from "./hub";
+import { t_HubInternal as _HubInternal, channelReturnSym } from "./hub";
 import { EventIterable } from "./generator";
 import { IChannel } from "./IChannel";
 import { EventData } from "./types";
@@ -45,11 +45,11 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 		}
 
 		const returnData = this._hub.handleSend(type as string, data, this as IChannel);
-		// if return data contians the internal member __CHANNEL_RTN then its a dictionary of return values from listeners
-		if (returnData && "__CHANNEL_RTN" in returnData) {
+		// if return data contians the internal symbol __CHANNEL_RTN then its a dictionary of return values from listeners
+		if (returnData && channelReturnSym in returnData) {
 			// is a standard return object dictionary
 			// remove dictoinary marker member
-			delete returnData.__CHANNEL_RTN;
+			delete returnData[channelReturnSym];
 			// only return the object if one or more listeners returned data otherwise return null
 			return Object.keys(returnData).length ? returnData : null;
 		} else {

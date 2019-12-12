@@ -1,4 +1,4 @@
-import { createHub } from "../hub";
+import { createHub, channelReturnSym } from "../hub";
 import { EventIterable, take, put, call, takeLatest, delay, fork, takeEvery, takeLast } from "../generator";
 import { Timer } from "./timer.notest";
 import { EventData } from "src/types";
@@ -113,7 +113,7 @@ describe("events", () => {
 
 		hub.addEventMiddleware((context, next) => {
 			const data = next(context);
-			expect(data).toEqual({ id1: 6, id2: "returns", id4: null, __CHANNEL_RTN: true });
+			expect(data).toEqual({ id1: 6, id2: "returns", id4: null, [channelReturnSym]: true });
 			mock();
 			return null;
 		});
