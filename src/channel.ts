@@ -62,6 +62,12 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 		if (this.disposed) {
 			throw new Error("Channel disposed");
 		}
+		if (!callback) {
+			throw new Error("callback missing");
+		}
+		if (!type) {
+			throw new Error("type missing");
+		}
 
 		if (Array.isArray(type)) {
 			for (let index = 0; index < type.length; index++) {
