@@ -12,12 +12,12 @@
 		"noErrorTruncation": true,
 		"alwaysStrict": true,
 		"module": "es6",
-		"jsx": "preserve",
+		"jsx": "react",
 		"baseUrl": ".",
 		"types": ["jest"],
 		"lib": [
-			"dom",
 			"esnext",
+			"dom",
 			"webworker"
 		]
 	},

@@ -1,9 +1,8 @@
 .git/
 .vscode/
 node_modules/
-
 config/
 scripts/
 build/
-
+test/
 src/libs/

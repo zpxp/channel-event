@@ -104,7 +104,7 @@ function generateWebBuild(entry, outputFolder, lib, overrideOpts) {
 					// back to the "file" loader at the end of the loader list.
 					oneOf: [
 						{
-							test: /\.(jsx?|tsx?)$/,
+							test: /\.(jsx?)$/,
 							include: paths.appSrc,
 							loader: require.resolve("babel-loader"),
 							options: {
