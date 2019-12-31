@@ -6,3 +6,5 @@ scripts/
 build/
 test/
 src/libs/
+dist/
+lib/

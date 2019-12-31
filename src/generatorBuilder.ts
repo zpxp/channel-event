@@ -155,6 +155,7 @@ function tryFork(generator: () => IterableIterator<EventIterable>, msTimeout: nu
 		while (!isSyncError) {
 			isSyncError = true;
 			try {
+				// eslint-disable-next-line no-loop-func
 				setTimeout(() => (isSyncError = false));
 				const result = yield call(generator);
 				// ran to completion
