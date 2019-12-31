@@ -1,4 +1,4 @@
-import { EventIterable, take, call, fork, takeEvery } from "./generator";
+import { EventIterable, take, call, fork } from "./generator";
 import { _ChannelInternal as tChannel } from "./channel";
 import { GeneratorUtils } from "./utils";
 import { IChannel } from "./IChannel";
@@ -33,7 +33,7 @@ export const generatorImplements = {
 	 * @param data async func or generator
 	 * @param channel
 	 */
-	call: function<A extends any[]>(data: EventIterable<{ func: (...args: A) => any; args: A }>, channel: tChannel): Promise<any> {
+	call: function<A extends any[]>(data: EventIterable<{ func: (...args: A) => any; args: A }>): Promise<any> {
 		const result = data.value.func.apply(null, data.value.args);
 		return Promise.resolve(result);
 	},
@@ -61,7 +61,7 @@ export const generatorImplements = {
 		});
 	},
 
-	delay: function(data: EventIterable<number>, channel: IChannel): Promise<never> {
+	delay: function(data: EventIterable<number>): Promise<never> {
 		return new Promise(resolve => {
 			setTimeout(() => {
 				resolve();

@@ -70,16 +70,14 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 		}
 
 		if (Array.isArray(type)) {
-			for (let index = 0; index < type.length; index++) {
-				const t = type[index];
+			for (const t of type) {
 				if (!this.listens[t]) {
 					this.listens[t] = [];
 				}
 				this.listens[t].push(callback);
 			}
 			const dispose = () => {
-				for (let index = 0; index < type.length; index++) {
-					const t = type[index];
+				for (const t of type) {
 					const i = this.listens[t].indexOf(callback);
 					if (~i) {
 						this.listens[t].splice(i, 1);
@@ -110,8 +108,7 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 
 	dispose() {
 		this.disposed = true;
-		for (let i = 0; i < this.onDisposes.length; i++) {
-			const func = this.onDisposes[i];
+		for (const func of this.onDisposes) {
 			func(this as IChannel<Actions>);
 		}
 		this.onDisposes = [];

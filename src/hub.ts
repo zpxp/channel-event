@@ -55,8 +55,7 @@ class _HubInternal implements IHub {
 			this._globalChannel.dispose();
 			this._globalChannel = null;
 		}
-		for (let index = 0; index < this.channels.length; index++) {
-			const chann = this.channels[index];
+		for (const chann of this.channels) {
 			chann.dispose();
 		}
 		this.channels = [];
@@ -78,8 +77,7 @@ class _HubInternal implements IHub {
 				// at end. invoke listeners
 
 				let returnData = { [channelReturnSym]: true };
-				for (let index = 0; index < this.channels.length; index++) {
-					const chann = this.channels[index];
+				for (const chann of this.channels) {
 					returnData = { ...returnData, ...chann.checkSend(context.type, context.payload) };
 				}
 				return returnData;
