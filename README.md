@@ -150,6 +150,37 @@ hub.addGeneratorMiddleware("take", function(data: EventIterable<string | string[
 });
 ```
 
+You may also create a new channel that exists for the scope of the generator action to make disposing all listeners easy, such as in this race action implentation
+
+``` ts
+hub.addGeneratorMiddleware("race", function (data, channel): Promise<any> {
+   // create an isolated channel that will be disposed on completion
+	// all listeners that did not win the race need to be rejected
+	// and cleaned up to prevent mem leaks
+	const chan = channel.hub.newChannel();
+	
+   return Promise.race(
+      data.value.map(item => {
+         if (item instanceof Promise) {
+            return item;
+         } else {
+            // is iterator. yield it and see what happens
+            return new Promise((resolve, reject) => {
+               chan.runGenerator(function*() {
+                  return yield item;
+               }, resolve);
+               chan.onDispose(reject);
+            });
+         }
+      })
+   ).finally(() => {
+		// when one action wins the race, dispose the channel 
+		// cleaning up all pending listeners/generators
+      chan.dispose();
+   });
+});
+```
+
 ### Generator actions
 
 Current available actions implemented in all hub instances
