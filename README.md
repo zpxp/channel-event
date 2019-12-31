@@ -16,7 +16,7 @@ Typescript typings are built in, however it will still work in vanila javascript
 
 ### Use 
 
-- [Fiddle](https://jsfiddle.net/mk05cn8r/4/)
+- [Fiddle](https://jsfiddle.net/dgf29k1n/)
 
 First, create a hub
 
@@ -44,7 +44,7 @@ const result = channel.send("test", 10);
 console.log(result); // -> { "channel id": true }
 ```
 
-Generator functions allow for reusable async logic. See [Generator middleware](#generator-middleware) for more generator actions.
+Generator functions allow for reusable async logic. See [Generator actions](#generator-actions) for more generator actions.
 
 ``` tsx
 function* test(): IterableIterator<EventIterable> {
