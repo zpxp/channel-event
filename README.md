@@ -141,8 +141,8 @@ NOTE: If the promised returned from the generator middleware implementation is p
 hub.addGeneratorMiddleware("take", function(data: EventIterable<string | string[]>, channel: IChannel): Promise<any> {
    return new Promise((resolve, reject) => {
       const unsub = channel.listen(data.value, result => {
-unsub();
-resolve(result);
+         unsub();
+         resolve(result);
       });
       // call reject when channel is disposed
       channel.onDispose(reject);
