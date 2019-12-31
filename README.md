@@ -153,7 +153,7 @@ hub.addGeneratorMiddleware("take", function(data: EventIterable<string | string[
 You may also create a new channel that exists for the scope of the generator action to make disposing all listeners easy, such as in this race action implentation
 
 ``` ts
-hub.addGeneratorMiddleware("race", function (data, channel): Promise<any> {
+hub.addGeneratorMiddleware("race", function (data: EventIterable<Array<EventIterable | Promise<any>>>, channel): Promise<any> {
    // create an isolated channel that will be disposed on completion
    // all listeners that did not win the race need to be rejected
    // and cleaned up to prevent mem leaks
