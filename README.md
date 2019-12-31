@@ -155,10 +155,10 @@ You may also create a new channel that exists for the scope of the generator act
 ``` ts
 hub.addGeneratorMiddleware("race", function (data, channel): Promise<any> {
    // create an isolated channel that will be disposed on completion
-	// all listeners that did not win the race need to be rejected
-	// and cleaned up to prevent mem leaks
-	const chan = channel.hub.newChannel();
-	
+   // all listeners that did not win the race need to be rejected
+   // and cleaned up to prevent mem leaks
+   const chan = channel.hub.newChannel();
+
    return Promise.race(
       data.value.map(item => {
          if (item instanceof Promise) {
@@ -174,8 +174,8 @@ hub.addGeneratorMiddleware("race", function (data, channel): Promise<any> {
          }
       })
    ).finally(() => {
-		// when one action wins the race, dispose the channel 
-		// cleaning up all pending listeners/generators
+      // when one action wins the race, dispose the channel 
+      // cleaning up all pending listeners/generators
       chan.dispose();
    });
 });
