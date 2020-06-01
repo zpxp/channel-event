@@ -44,6 +44,7 @@ export class GeneratorBuilder implements IGeneratorBuilder {
 	run() {
 		// remove the builder from the channel as it can no longer be configured once running has started
 		this.channel.currentGeneratorBuilder = null;
+		let cancellers: Array<() => void> = [];
 
 		let rtnData: any[] = new Array(this.generators.length);
 		const hasBinder = !!this.thisArgs;
@@ -52,14 +53,14 @@ export class GeneratorBuilder implements IGeneratorBuilder {
 			return (data: any) => {
 				rtnData[index] = data;
 				this.generators[index] = null;
-				if (this.generators.every(x => x === null)) {
+				if (this.generators.every((x) => x === null)) {
 					// all done. invoke completion callbacks
 					if (this.generators.length === 1) {
 						//pass as a single object
-						this.completionCallbacks.forEach(x => x(rtnData[0]));
+						this.completionCallbacks.forEach((x) => x(rtnData[0]));
 					} else {
 						// pass all data
-						this.completionCallbacks.forEach(x => x(rtnData));
+						this.completionCallbacks.forEach((x) => x(rtnData));
 					}
 				}
 			};
@@ -72,12 +73,17 @@ export class GeneratorBuilder implements IGeneratorBuilder {
 					: this.generators[index];
 
 				try {
-					this.channel.runGenerator(tryFork(generator, this.restartMsTimeout, onCompletion(index)), null, err => {
-						this.errorCallbacks.forEach(x => x(err));
-					});
+					const canceller = this.channel.runGenerator(
+						tryFork(generator, this.restartMsTimeout, onCompletion(index)),
+						null,
+						(err) => {
+							this.errorCallbacks.forEach((x) => x(err));
+						}
+					);
+					cancellers.push(canceller);
 				} catch (e) {
 					if (this.errorCallbacks.length) {
-						this.errorCallbacks.forEach(x => x(e));
+						this.errorCallbacks.forEach((x) => x(e));
 					} else {
 						throw e;
 					}
@@ -90,30 +96,38 @@ export class GeneratorBuilder implements IGeneratorBuilder {
 					: this.generators[index];
 
 				try {
-					this.channel.runGenerator(generator, onCompletion(index), err => {
+					const canceller = this.channel.runGenerator(generator, onCompletion(index), (err) => {
 						if (this.errorCallbacks.length) {
-							this.errorCallbacks.forEach(x => x(err));
+							this.errorCallbacks.forEach((x) => x(err));
 						} else {
 							throw err;
 						}
 					});
+					cancellers.push(canceller);
 				} catch (e) {
 					if (this.errorCallbacks.length) {
-						this.errorCallbacks.forEach(x => x(e));
+						this.errorCallbacks.forEach((x) => x(e));
 					} else {
 						throw e;
 					}
 				}
 			}
 		}
+
+		return () => {
+			// cancel function
+			for (const canceller of cancellers) {
+				canceller();
+			}
+		};
 	}
 }
 
 export interface IGeneratorBuilder {
 	/**
-	 * Invoke all added generators
+	 * Invoke all added generators. Returns a function that when invoked, cancels all running generators
 	 */
-	run(): void;
+	run(): () => void;
 
 	/**
 	 * Add a generator function to the current configuration to be invoked when `IGeneratorBuilder.run` is called
