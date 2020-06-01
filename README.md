@@ -1,6 +1,6 @@
 # channel-event
 
-A simple javascript event channel library that can run generator functions, allows async data flows and enables cross component communication.
+A simple and highly extensible javascript event channel library that can run generator functions, which allows async data flows and simplifies cross component communication.
 Events are scoped to hub instances which means that the scale of the event channels can be controlled and event collisions are non existant. Events can be easily debugged via this scoping and built in logging. 
 
 ![Bundlephobia gzip + minified](https://badgen.net/bundlephobia/minzip/channel-event)
