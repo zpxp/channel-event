@@ -60,7 +60,7 @@ export function fork<A extends any[]>(func: (...args: A) => any, ...args: A): Ev
  * Blocks for the given ms duration
  * @param durationMs
  */
-export function delay(durationMs: number): EventIterable {
+export function delay(durationMs?: number): EventIterable {
 	return {
 		function: "delay",
 		value: durationMs

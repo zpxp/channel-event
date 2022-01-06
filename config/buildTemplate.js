@@ -5,9 +5,6 @@ const webpack = require("webpack");
 const packageJson = require("../package.json");
 const PnpWebpackPlugin = require("pnp-webpack-plugin");
 const utils = require("./utils");
-const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-const TerserPlugin = require("terser-webpack-plugin");
-const CssAutoRequirePlugin = require("./autoRequireCssPlugin");
 
 const shouldUseSourceMap = process.env.GENERATE_SOURCEMAP !== "false";
 
@@ -149,17 +146,7 @@ function generateWebBuild(entry, outputFolder, lib, overrideOpts) {
 							}
 						},
 
-						{
-							test: /\.scss$|\.css$/,
-							exclude: /node_module|libs|\.nohash\.s?css$/,
-							use: getStyleLoaders(true)
-						},
-
-						//dont hash node_modules or libs
-						{
-							test: /\.scss$|\.css$/,
-							use: getStyleLoaders(false)
-						},
+		
 
 						// "file" loader makes sure those assets get served by WebpackDevServer.
 						// When you `import` an asset, you get its (virtual) filename.
@@ -183,17 +170,7 @@ function generateWebBuild(entry, outputFolder, lib, overrideOpts) {
 				// Make sure to add the new loader(s) before the "file" loader.
 			]
 		},
-		plugins: [
-			new MiniCssExtractPlugin({
-				// Options similar to the same options in webpackOptions.output
-				// both options are optional
-				filename: "styles.css",
-				chunkFilename: "styles.chunk.css"
-			}),
-			new CssAutoRequirePlugin({
-				packageJson: packageJson
-			})
-		],
+		plugins: [],
 		...overrideOpts
 	};
 
@@ -268,56 +245,3 @@ function generateNodeBuild(entry, outputFolder, lib, overrideOpts) {
 
 module.exports = { generateNodeBuild, generateWebBuild };
 
-// common function to get style loaders
-function getStyleLoaders(hashCSS) {
-	const loaders = [
-		{
-			loader: MiniCssExtractPlugin.loader,
-			options: {}
-		},
-		{
-			loader: require.resolve("css-loader"),
-			options: {
-				importLoaders: 3,
-				modules: hashCSS,
-				sourceMap: true,
-				localIdentName: packageJson.name.replace(/redi|-/g, "") + "_[local]___[hash:base64:7]"
-			}
-		},
-		{
-			// Options for PostCSS as we reference these options twice
-			// Adds vendor prefixing based on your specified browser support in
-			// package.json
-			loader: require.resolve("postcss-loader"),
-			options: {
-				// Necessary for external CSS imports to work
-				// https://github.com/facebook/create-react-app/issues/2677
-				ident: "postcss",
-				plugins: () => [
-					require("postcss-flexbugs-fixes"),
-					require("postcss-preset-env")({
-						autoprefixer: {
-							flexbox: "no-2009"
-						},
-						stage: 3
-					})
-				]
-			}
-		},
-		{
-			loader: "sass-loader", // compiles Sass to CSS,
-			options: {
-				sourceMap: true
-			}
-		},
-		//custom IE prefix loader
-		{
-			loader: path.resolve("./config/cssTransformer"),
-			options: {
-				exclude: [/vars\.scss$|theme\.scss$/]
-			}
-		}
-	];
-
-	return loaders;
-}
