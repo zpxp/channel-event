@@ -5,8 +5,16 @@ const webpack = require("webpack");
 const packageJson = require("../package.json");
 const PnpWebpackPlugin = require("pnp-webpack-plugin");
 const utils = require("./utils");
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const TerserPlugin = require("terser-webpack-plugin");
+const CssAutoRequirePlugin = require("./autoRequireCssPlugin");
+const ESLintPlugin = require('eslint-webpack-plugin');
 
 const shouldUseSourceMap = process.env.GENERATE_SOURCEMAP !== "false";
+
+const appSrc = path.resolve(__dirname, "..", "src");
+const appRoot = path.resolve(__dirname, "..");
+const appNM = path.resolve(__dirname, "..", "node_modules");
 
 const externals = fs.readdirSync("./node_modules").reduce((prev, next) => {
 	return {
@@ -28,6 +36,7 @@ const externals = fs.readdirSync("./node_modules").reduce((prev, next) => {
  * @param {object?} overrideOpts
  */
 function generateWebBuild(entry, outputFolder, lib, overrideOpts) {
+	/** @type {webpack.Configuration} */
 	const conf = {
 		mode: "production",
 		bail: true,
@@ -40,137 +49,23 @@ function generateWebBuild(entry, outputFolder, lib, overrideOpts) {
 			library: packageJson.name,
 			libraryTarget: lib ? "commonjs2" : "umd"
 		},
-		node: {
-			process: false
-		},
+
 		optimization: {
-			minimize: false,
-			splitChunks: {
-				cacheGroups: {
-					styles: {
-						name: "styles",
-						test: /\.css$/,
-						chunks: "all",
-						enforce: true
-					}
-				}
-			}
+			minimize: !lib
 		},
 		resolve: {
-			modules: ["src/@types/**/*", "node_modules"],
-			extensions: [".js", ".json", ".jsx", ".ts", ".tsx"],
-			plugins: [PnpWebpackPlugin]
-		},
-		resolveLoader: {
-			plugins: [
-				// Also related to Plug'n'Play, but this time it tells Webpack to load its loaders
-				// from the current package.
-				PnpWebpackPlugin.moduleLoader(module)
-			]
+			extensions: [".ts", ".tsx", ".js"],
+			modules: ["node_modules", appNM, appSrc, appRoot]
 		},
 		module: {
-			strictExportPresence: true,
 			rules: [
-				{ parser: { requireEnsure: false } },
-				{
-					test: /\.tsx?$/,
-					enforce: "pre",
-					loader: "ts-loader",
-					options: PnpWebpackPlugin.tsLoaderOptions({
-						compilerOptions: {
-							outDir: outputFolder,
-							jsx: "react"
-						}
-					})
-				},
-				// First, run the linter.
-				{
-					test: /\.tsx?$/,
-					enforce: "pre",
-					exclude: /node_modules/,
-					loader: "eslint-loader",
-					include: paths.appSrc,
-					options: {
-						failOnError: true
-					}
-				},
-				{
-					// "oneOf" will traverse all following loaders until one will
-					// match the requirements. When no loader matches it will fall
-					// back to the "file" loader at the end of the loader list.
-					oneOf: [
-						{
-							test: /\.(jsx?)$/,
-							include: paths.appSrc,
-							loader: require.resolve("babel-loader"),
-							options: {
-								plugins: [
-									[
-										require.resolve("./babel/babelAssetImporter"),
-										{
-											loaderMap: {
-												svg: {
-													ReactComponent: "@svgr/webpack?-prettier,-svgo![path]"
-												}
-											}
-										}
-									]
-								],
-								// This is a feature of `babel-loader` for webpack (not Babel itself).
-								// It enables caching results in ./node_modules/.cache/babel-loader/
-								// directory for faster rebuilds.
-								cacheDirectory: true,
-								// Don't waste time on Gzipping the cache
-								cacheCompression: false
-							}
-						},
-						// Process any JS outside of the app with Babel.
-						// Unlike the application JS, we only compile the standard ES features.
-						{
-							test: /\.(js|mjs)$/,
-							exclude: /@babel(?:\/|\\{1,2})runtime/,
-							loader: require.resolve("babel-loader"),
-							options: {
-								babelrc: false,
-								configFile: false,
-								compact: false,
-								cacheDirectory: true,
-								// Don't waste time on Gzipping the cache
-								cacheCompression: false,
+				{ test: /\.js$|\.map$/, loader: "source-map-loader" },
 
-								// If an error happens in a package, it's possible to be
-								// because it was compiled. Thus, we don't want the browser
-								// debugger to show the original code. Instead, the code
-								// being evaluated would be much more helpful.
-								sourceMaps: false
-							}
-						},
-
+				{ test: /\.tsx?$|\.jsx?$/, include: path.join(__dirname, "../src"), loader: "ts-loader" },
 		
-
-						// "file" loader makes sure those assets get served by WebpackDevServer.
-						// When you `import` an asset, you get its (virtual) filename.
-						// In production, they would get copied to the `build` folder.
-						// This loader doesn't use a "test" so it will catch all modules
-						// that fall through the other loaders.
-						{
-							// Exclude `js` files to keep "css" loader working as it injects
-							// its runtime that would otherwise be processed through "file" loader.
-							// Also exclude `html` and `json` extensions so they get processed
-							// by webpacks internal loaders.
-							exclude: [/\.(js|mjs|jsx)$/, /\.html$/, /\.json$/, /\.tsx?$/],
-							loader: require.resolve("file-loader"),
-							options: {
-								name: "media/[name].[hash:8].[ext]"
-							}
-						}
-					]
-				}
-				// ** STOP ** Are you adding a new loader?
-				// Make sure to add the new loader(s) before the "file" loader.
 			]
 		},
-		plugins: [],
+		plugins: [new ESLintPlugin()],
 		...overrideOpts
 	};
 
@@ -191,10 +86,6 @@ function generateNodeBuild(entry, outputFolder, lib, overrideOpts) {
 		target: "node",
 		entry: entry,
 		externals,
-		node: {
-			__dirname: false,
-			process: false
-		},
 		output: {
 			// The build folder.
 			path: outputFolder,
@@ -203,40 +94,21 @@ function generateNodeBuild(entry, outputFolder, lib, overrideOpts) {
 			libraryTarget: lib ? "commonjs2" : "umd"
 		},
 		resolve: {
-			modules: ["src/@types/**/*", "node_modules"],
-			extensions: [".js", ".json", ".jsx", ".ts", ".tsx"]
+			extensions: [".ts", ".tsx", ".js"],
+			modules: ["node_modules", appNM, appSrc, appRoot]
 		},
 		optimization: {
-			minimize: false
+			minimize: !lib
 		},
 		module: {
-			strictExportPresence: true,
 			rules: [
-				{ parser: { requireEnsure: false } },
-				// First, run the linter.
-				{
-					test: /\.tsx?$/,
-					enforce: "pre",
-					exclude: /node_modules/,
-					loader: "eslint-loader",
-					include: paths.appSrc,
-					options: {
-						failOnError: true
-					}
-				},
-				{
-					test: /\.tsx?$/,
-					loader: "ts-loader",
-					options: PnpWebpackPlugin.tsLoaderOptions({
-						compilerOptions: {
-							outDir: outputFolder,
-							jsx: "react"
-						}
-					})
-				}
+				{ test: /\.js$|\.map$/, loader: "source-map-loader" },
+
+				{ test: /\.tsx?$|\.jsx?$/, include: path.join(__dirname, "../src"), loader: "ts-loader" },
+			
 			]
 		},
-		plugins: [],
+		plugins: [new ESLintPlugin()],
 		...overrideOpts
 	};
 
@@ -244,4 +116,3 @@ function generateNodeBuild(entry, outputFolder, lib, overrideOpts) {
 }
 
 module.exports = { generateNodeBuild, generateWebBuild };
-

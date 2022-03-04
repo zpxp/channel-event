@@ -2,7 +2,7 @@ import { call, EventIterable, fork, delay } from "./generator";
 import { _ChannelInternal } from "./channel";
 
 export class GeneratorBuilder implements IGeneratorBuilder {
-	private generators: Array<() => IterableIterator<EventIterable>>;
+	private generators: Array<(...args: any[]) => Generator<EventIterable, any, any>>;
 	private completionCallbacks: Array<(result?: any) => void>;
 	private errorCallbacks: Array<(error?: any) => void>;
 	private restartAsyncError: boolean;
@@ -15,7 +15,7 @@ export class GeneratorBuilder implements IGeneratorBuilder {
 		this.errorCallbacks = [];
 	}
 
-	addGenerator(generatorFunc: () => IterableIterator<EventIterable>) {
+	addGenerator(generatorFunc: () => Generator<EventIterable, any, any>) {
 		this.generators.push(generatorFunc);
 		return this;
 	}
@@ -44,23 +44,23 @@ export class GeneratorBuilder implements IGeneratorBuilder {
 	run() {
 		// remove the builder from the channel as it can no longer be configured once running has started
 		this.channel.currentGeneratorBuilder = null;
-		let cancellers: Array<() => void> = [];
+		const cancellers: Array<() => void> = [];
 
-		let rtnData: any[] = new Array(this.generators.length);
+		const rtnData: any[] = new Array(this.generators.length);
 		const hasBinder = !!this.thisArgs;
 
 		const onCompletion = (index: number) => {
 			return (data: any) => {
 				rtnData[index] = data;
 				this.generators[index] = null;
-				if (this.generators.every((x) => x === null)) {
+				if (this.generators.every(x => x === null)) {
 					// all done. invoke completion callbacks
 					if (this.generators.length === 1) {
 						//pass as a single object
-						this.completionCallbacks.forEach((x) => x(rtnData[0]));
+						this.completionCallbacks.forEach(x => x(rtnData[0]));
 					} else {
 						// pass all data
-						this.completionCallbacks.forEach((x) => x(rtnData));
+						this.completionCallbacks.forEach(x => x(rtnData));
 					}
 				}
 			};
@@ -76,14 +76,14 @@ export class GeneratorBuilder implements IGeneratorBuilder {
 					const canceller = this.channel.runGenerator(
 						tryFork(generator, this.restartMsTimeout, onCompletion(index)),
 						null,
-						(err) => {
-							this.errorCallbacks.forEach((x) => x(err));
+						err => {
+							this.errorCallbacks.forEach(x => x(err));
 						}
 					);
 					cancellers.push(canceller);
 				} catch (e) {
 					if (this.errorCallbacks.length) {
-						this.errorCallbacks.forEach((x) => x(e));
+						this.errorCallbacks.forEach(x => x(e));
 					} else {
 						throw e;
 					}
@@ -96,9 +96,9 @@ export class GeneratorBuilder implements IGeneratorBuilder {
 					: this.generators[index];
 
 				try {
-					const canceller = this.channel.runGenerator(generator, onCompletion(index), (err) => {
+					const canceller = this.channel.runGenerator(generator, onCompletion(index), err => {
 						if (this.errorCallbacks.length) {
-							this.errorCallbacks.forEach((x) => x(err));
+							this.errorCallbacks.forEach(x => x(err));
 						} else {
 							throw err;
 						}
@@ -106,7 +106,7 @@ export class GeneratorBuilder implements IGeneratorBuilder {
 					cancellers.push(canceller);
 				} catch (e) {
 					if (this.errorCallbacks.length) {
-						this.errorCallbacks.forEach((x) => x(e));
+						this.errorCallbacks.forEach(x => x(e));
 					} else {
 						throw e;
 					}
@@ -133,7 +133,7 @@ export interface IGeneratorBuilder {
 	 * Add a generator function to the current configuration to be invoked when `IGeneratorBuilder.run` is called
 	 * @param generatorFunc Generator function to invoke
 	 */
-	addGenerator(generatorFunc: (...args: any[]) => IterableIterator<EventIterable>): IGeneratorBuilder;
+	addGenerator(generatorFunc: (...args: any[]) => Generator<EventIterable, any, any>): IGeneratorBuilder;
 
 	/**
 	 * Add a callback function to invoke when all generators are run to completion
@@ -163,7 +163,7 @@ export interface IGeneratorBuilder {
 	restartOnAsyncError(msTimeout?: number): IGeneratorBuilder;
 }
 
-function tryFork(generator: () => IterableIterator<EventIterable>, msTimeout: number, callback: (data: any) => void) {
+function tryFork<T = any>(generator: () => Generator<EventIterable, T, any>, msTimeout: number, callback: (data: any) => void) {
 	function* runner() {
 		let isSyncError = false;
 		while (!isSyncError) {
@@ -171,7 +171,7 @@ function tryFork(generator: () => IterableIterator<EventIterable>, msTimeout: nu
 			try {
 				// eslint-disable-next-line no-loop-func
 				setTimeout(() => (isSyncError = false));
-				const result = yield call(generator);
+				const result: T = yield call(generator);
 				// ran to completion
 				callback(result);
 				return;
@@ -187,7 +187,7 @@ function tryFork(generator: () => IterableIterator<EventIterable>, msTimeout: nu
 		}
 	}
 
-	return function* retryOnError(): IterableIterator<EventIterable> {
+	return function* retryOnError(): Generator<EventIterable, any, any> {
 		yield fork(runner);
 	};
 }

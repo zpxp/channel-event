@@ -1,7 +1,8 @@
-export { IChannel } from "./IChannel";
-export { IHub } from "./IHub";
+export type { IChannel } from "./IChannel";
+export type { IHub } from "./IHub";
 export { createHub, addGlobalGeneratorMiddleware } from "./hub";
-export { IGeneratorBuilder } from "./generatorBuilder";
-export { EventData, EventMiddleware, EventMiddlewareContext } from "./types";
+export type { IGeneratorBuilder } from "./generatorBuilder";
+export type { EventData, EventMiddleware, EventMiddlewareContext } from "./types";
 
-export { EventIterable, take, put, call, fork, delay, takeLatest, takeEvery, takeLast } from "./generator";
+export type { EventIterable } from "./generator";
+export { take, put, call, fork, delay, takeLatest, takeEvery, takeLast } from "./generator";

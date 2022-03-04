@@ -8,10 +8,10 @@ import { t_HubInternal } from "./hub";
  * Internal call to handle running generator iter trees
  */
 export class IterRunner {
-	private iterStack: Array<IterableIterator<EventIterable>>;
+	private iterStack: Array<Generator<EventIterable, any, any>>;
 	private cancelled: boolean;
 
-	constructor(iter: IterableIterator<EventIterable>, private channel: _ChannelInternal, private hub: t_HubInternal) {
+	constructor(iter: Generator<EventIterable, any, any>, private channel: _ChannelInternal, private hub: t_HubInternal) {
 		this.iterStack = [iter];
 		this.cancel = this.cancel.bind(this);
 		this.run = this.run.bind(this);
@@ -49,7 +49,7 @@ export class IterRunner {
 				try {
 					const val = this.next(iter, argument);
 					this.handleIterValue(val, onCompletion, onError);
-				} catch (err) {
+				} catch (err: any) {
 					const val = this.handleIterError(err);
 					this.handleIterValue(val, onCompletion, onError);
 				}
@@ -108,7 +108,7 @@ export class IterRunner {
 	 * @param iter
 	 * @param argument argument to return out of left side of `yeild` keyword
 	 */
-	private next(iter: IterableIterator<EventIterable>, argument?: any) {
+	private next(iter: Generator<EventIterable, any, any>, argument?: any) {
 		if (!this.canProcessNextIteration) {
 			return;
 		}
@@ -120,7 +120,7 @@ export class IterRunner {
 			return result.value;
 		} else {
 			if (!result.value || !result.value.function) {
-				throw new Error("Must yield a 'IterableIterator<EventIterable>' function or value");
+				throw new Error("Must yield a 'Generator<EventIterable, any,any>' function or value");
 			}
 
 			if (
@@ -128,7 +128,7 @@ export class IterRunner {
 				this.hub.generatorMiddlewares[result.value.function].length === 0
 			) {
 				throw new Error(
-					`'IterableIterator<EventIterable>' function '${result.value.function}' does not exist. Add middleware to 'hub.addGeneratorMiddleware'.`
+					`'Generator<EventIterable, any,any>' function '${result.value.function}' does not exist. Add middleware to 'hub.addGeneratorMiddleware'.`
 				);
 			}
 
@@ -146,7 +146,7 @@ export class IterRunner {
 	 * Try and throw inside the top most iter and propogate up the iter stack until it is handled successfuly
 	 * @param err
 	 */
-	private handleIterError(err: Error): EventIterable | Promise<any> {
+	private handleIterError(err: any): EventIterable | Promise<any> {
 		if (this.canProcessNextIteration) {
 			if (this.iterStack.length > 0) {
 				const iter = this.iterStack[this.iterStack.length - 1];

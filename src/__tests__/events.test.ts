@@ -130,8 +130,8 @@ describe("events", () => {
 		const hub = createHub();
 		const channel = hub.newChannel();
 
-		return new Promise(resolve => {
-			channel.runGenerator(function*(): IterableIterator<EventIterable> {
+		return new Promise<void>(resolve => {
+			channel.runGenerator(function* (): Generator<EventIterable> {
 				expect(1).toBe(1);
 				resolve();
 			});
@@ -142,8 +142,8 @@ describe("events", () => {
 		const hub = createHub();
 		const channel = hub.newChannel();
 
-		return new Promise(resolve => {
-			channel.runGenerator(function*(): IterableIterator<EventIterable> {
+		return new Promise<void>(resolve => {
+			channel.runGenerator(function* (): Generator<EventIterable> {
 				const data = yield take("test");
 				expect(data).toEqual({ type: "test", payload: 2 });
 				resolve();
@@ -161,8 +161,8 @@ describe("events", () => {
 
 		channel.listen("test", mock);
 
-		return new Promise(resolve => {
-			channel.runGenerator(function*(): IterableIterator<EventIterable> {
+		return new Promise<void>(resolve => {
+			channel.runGenerator(function* (): Generator<EventIterable> {
 				for (let index = 0; index < 10; index++) {
 					const data = yield take("test");
 					expect(data).toEqual({ type: "test", payload: 2 });
@@ -173,7 +173,7 @@ describe("events", () => {
 				resolve();
 			});
 
-			channel.runGenerator(function*(): IterableIterator<EventIterable> {
+			channel.runGenerator(function* (): Generator<EventIterable> {
 				for (let index = 0; index < 10; index++) {
 					yield put("test", 2);
 				}
@@ -189,8 +189,8 @@ describe("events", () => {
 
 		channel.listen("test", mock);
 
-		return new Promise(resolve => {
-			channel.runGenerator(function*(): IterableIterator<EventIterable> {
+		return new Promise<void>(resolve => {
+			channel.runGenerator(function* (): Generator<EventIterable> {
 				for (let index = 0; index < 10; index++) {
 					const data = yield take("test");
 					expect(data).toEqual({ type: "test", payload: 2 });
@@ -201,14 +201,14 @@ describe("events", () => {
 				resolve();
 			});
 
-			function* testfunc(count: number): IterableIterator<EventIterable> {
+			function* testfunc(count: number): Generator<EventIterable> {
 				for (let index = 0; index < count; index++) {
 					yield put("test", 2);
 				}
 				return 77;
 			}
 
-			channel.runGenerator(function*(): IterableIterator<EventIterable> {
+			channel.runGenerator(function* (): Generator<EventIterable> {
 				const result = yield call(testfunc, 10);
 				expect(result).toEqual(77);
 			});
@@ -219,8 +219,8 @@ describe("events", () => {
 		const hub = createHub();
 		const channel = hub.newChannel();
 
-		return new Promise(resolve => {
-			channel.runGenerator(function*(): IterableIterator<EventIterable> {
+		return new Promise<void>(resolve => {
+			channel.runGenerator(function* (): Generator<EventIterable> {
 				const timer = new Timer();
 				timer.start();
 
@@ -238,13 +238,13 @@ describe("events", () => {
 		const hub = createHub();
 		const channel = hub.newChannel();
 
-		return new Promise(resolve => {
-			function* testFork(delayc: number): IterableIterator<EventIterable> {
+		return new Promise<void>(resolve => {
+			function* testFork(delayc: number): Generator<EventIterable> {
 				yield delay(delayc);
 				yield put("test", 77);
 			}
 
-			channel.runGenerator(function*(): IterableIterator<EventIterable> {
+			channel.runGenerator(function* (): Generator<EventIterable> {
 				yield fork(testFork, 500);
 				const g = yield take("test");
 
@@ -260,14 +260,14 @@ describe("events", () => {
 
 		const mock = jest.fn();
 
-		return new Promise(resolve => {
-			function* testFork(): IterableIterator<EventIterable> {
+		return new Promise<void>(resolve => {
+			function* testFork(): Generator<EventIterable> {
 				yield delay(100);
 				mock();
 			}
 
-			channel.runGenerator(function*(): IterableIterator<EventIterable> {
-				const cancel = yield fork(testFork);
+			channel.runGenerator(function* () {
+				const cancel: () => void = yield fork(testFork);
 				cancel();
 				yield delay(200);
 
@@ -285,16 +285,16 @@ describe("events", () => {
 
 		channel.listen("test", mock);
 
-		return new Promise(resolve => {
+		return new Promise<void>(resolve => {
 			function testfunc(count: number) {
-				return new Promise(resolve => {
+				return new Promise<number>(resolve => {
 					setTimeout(() => {
 						resolve(77);
 					}, count);
 				});
 			}
 
-			channel.runGenerator(function*(): IterableIterator<EventIterable> {
+			channel.runGenerator(function* (): Generator<EventIterable> {
 				const result = yield call(testfunc, 100);
 				expect(result).toEqual(77);
 				resolve();
@@ -310,9 +310,9 @@ describe("events", () => {
 
 		channel.listen("test", mock);
 
-		return new Promise(resolve => {
+		return new Promise<void>(resolve => {
 			let completed = false;
-			channel.runGenerator(function*(): IterableIterator<EventIterable> {
+			channel.runGenerator(function* (): Generator<EventIterable> {
 				for (let index = 0; index < 30; index++) {
 					const data = yield take("test");
 					expect(data).toEqual({ type: "test", payload: 2 });
@@ -322,14 +322,14 @@ describe("events", () => {
 			});
 
 			function testfuncprom(duration: number) {
-				return new Promise(resolve => {
+				return new Promise<number>(resolve => {
 					setTimeout(() => {
 						resolve(77);
 					}, duration);
 				});
 			}
 
-			function* testfunc(count: number, recurse: number): IterableIterator<EventIterable> {
+			function* testfunc(count: number, recurse: number): Generator<EventIterable> {
 				for (let index = 0; index < count; index++) {
 					yield put("test", 2);
 				}
@@ -340,7 +340,7 @@ describe("events", () => {
 				}
 			}
 
-			channel.runGenerator(function*(): IterableIterator<EventIterable> {
+			channel.runGenerator(function* (): Generator<EventIterable> {
 				const result = yield call(testfunc, 10, 3);
 				expect(result).toEqual(77);
 				expect(mock).toBeCalledTimes(30);
@@ -356,16 +356,16 @@ describe("events", () => {
 
 		const mock = jest.fn();
 		const mock2 = jest.fn();
-		return new Promise(resolve => {
-			channel.runGenerator(function*(): IterableIterator<EventIterable> {
-				yield takeLatest("test", function*(data: EventData<number>) {
+		return new Promise<void>(resolve => {
+			channel.runGenerator(function* (): Generator<EventIterable> {
+				yield takeLatest("test", function* (data: EventData<number>) {
 					mock2();
 					yield delay(100);
 					mock();
 				});
 			});
 
-			function* testfunc(count: number): IterableIterator<EventIterable> {
+			function* testfunc(count: number): Generator<EventIterable> {
 				for (let index = 0; index < count; index++) {
 					yield put("test", 2);
 					yield delay(1);
@@ -373,7 +373,7 @@ describe("events", () => {
 				return 77;
 			}
 
-			channel.runGenerator(function*(): IterableIterator<EventIterable> {
+			channel.runGenerator(function* (): Generator<EventIterable> {
 				const result = yield call(testfunc, 10);
 				expect(result).toEqual(77);
 			});
@@ -392,16 +392,16 @@ describe("events", () => {
 
 		const mock = jest.fn();
 		const mock2 = jest.fn();
-		return new Promise(resolve => {
-			channel.runGenerator(function*(): IterableIterator<EventIterable> {
-				yield takeEvery("test", function*(data) {
+		return new Promise<void>(resolve => {
+			channel.runGenerator(function* (): Generator<EventIterable> {
+				yield takeEvery("test", function* (data) {
 					mock2();
 					yield delay(100);
 					mock();
 				});
 			});
 
-			function* testfunc(count: number): IterableIterator<EventIterable> {
+			function* testfunc(count: number): Generator<EventIterable> {
 				for (let index = 0; index < count; index++) {
 					yield put("test", 2);
 					yield delay(1);
@@ -409,7 +409,7 @@ describe("events", () => {
 				return 77;
 			}
 
-			channel.runGenerator(function*(): IterableIterator<EventIterable> {
+			channel.runGenerator(function* (): Generator<EventIterable> {
 				const result = yield call(testfunc, 10);
 				expect(result).toEqual(77);
 			});
@@ -428,16 +428,16 @@ describe("events", () => {
 
 		const mock = jest.fn();
 		const mock2 = jest.fn();
-		return new Promise(resolve => {
-			channel.runGenerator(function*(): IterableIterator<EventIterable> {
-				yield takeLast("test", function*(data) {
+		return new Promise<void>(resolve => {
+			channel.runGenerator(function* (): Generator<EventIterable> {
+				yield takeLast("test", function* (data) {
 					mock2();
 					yield delay(100);
 					mock();
 				});
 			});
 
-			function* testfunc(count: number): IterableIterator<EventIterable> {
+			function* testfunc(count: number): Generator<EventIterable> {
 				for (let index = 0; index < count; index++) {
 					yield put("test", 2);
 					// yield delay(1);
@@ -445,7 +445,7 @@ describe("events", () => {
 				return 77;
 			}
 
-			channel.runGenerator(function*(): IterableIterator<EventIterable> {
+			channel.runGenerator(function* (): Generator<EventIterable> {
 				const result = yield call(testfunc, 10);
 				expect(result).toEqual(77);
 			});
@@ -462,16 +462,13 @@ describe("events", () => {
 		const hub = createHub();
 		const channel = hub.newChannel();
 
-		return new Promise(resolve => {
-			function* test(): IterableIterator<EventIterable> {
+		return new Promise<void>(resolve => {
+			function* test(): Generator<EventIterable> {
 				expect(1).toBe(1);
 				resolve();
 			}
 
-			channel.generator
-				.addGenerator(test)
-				.restartOnAsyncError()
-				.run();
+			channel.generator.addGenerator(test).restartOnAsyncError().run();
 		});
 	});
 
@@ -479,7 +476,7 @@ describe("events", () => {
 		const hub = createHub();
 		const channel = hub.newChannel();
 
-		function* test(): IterableIterator<EventIterable> {
+		function* test(): Generator<EventIterable> {
 			throw new Error("err");
 		}
 
@@ -499,15 +496,15 @@ describe("events", () => {
 		const hub = createHub();
 		const channel = hub.newChannel();
 
-		return new Promise(resolve => {
-			function* test(): IterableIterator<EventIterable> {
+		return new Promise<void>(resolve => {
+			function* test(): Generator<EventIterable> {
 				yield delay(10);
 				throw new Error("err");
 			}
 
 			const mock = jest.fn();
 
-			function* resolver(): IterableIterator<EventIterable> {
+			function* resolver(): Generator<EventIterable> {
 				yield delay(12);
 				expect(mock).toBeCalledWith("err");
 				resolve();
@@ -527,7 +524,7 @@ describe("events", () => {
 		const hub = createHub();
 		const channel = hub.newChannel();
 
-		function* test(): IterableIterator<EventIterable> {
+		function* test(): Generator<EventIterable> {
 			throw new Error("err");
 		}
 
@@ -538,11 +535,11 @@ describe("events", () => {
 		const hub = createHub();
 		const channel = hub.newChannel();
 
-		return new Promise(resolve => {
+		return new Promise<void>(resolve => {
 			let count = 0;
 			const mock = jest.fn();
 
-			function* test(): IterableIterator<EventIterable> {
+			function* test(): Generator<EventIterable> {
 				mock();
 				if (count < 10) {
 					yield put("test");
@@ -552,7 +549,7 @@ describe("events", () => {
 				}
 			}
 
-			function* check(): IterableIterator<EventIterable> {
+			function* check(): Generator<EventIterable> {
 				for (let index = 0; index < 10; index++) {
 					yield take("test");
 				}
@@ -560,11 +557,7 @@ describe("events", () => {
 				resolve();
 			}
 
-			channel.generator
-				.addGenerator(check)
-				.addGenerator(test)
-				.restartOnAsyncError()
-				.run();
+			channel.generator.addGenerator(check).addGenerator(test).restartOnAsyncError().run();
 		});
 	});
 
@@ -572,11 +565,11 @@ describe("events", () => {
 		const hub = createHub();
 		const channel = hub.newChannel();
 
-		return new Promise(resolve => {
+		return new Promise<void>(resolve => {
 			let count = 0;
 			const mock = jest.fn();
 
-			function* test(): IterableIterator<EventIterable> {
+			function* test(): Generator<EventIterable> {
 				mock();
 				if (count < 10) {
 					yield put("test");
@@ -584,7 +577,7 @@ describe("events", () => {
 
 					yield call(
 						() =>
-							new Promise((resolve, reject) => {
+							new Promise<void>((resolve, reject) => {
 								setTimeout(() => {
 									reject("err");
 								});
@@ -593,7 +586,7 @@ describe("events", () => {
 				}
 			}
 
-			function* check(): IterableIterator<EventIterable> {
+			function* check(): Generator<EventIterable> {
 				for (let index = 0; index < 10; index++) {
 					yield take("test");
 				}
@@ -601,11 +594,7 @@ describe("events", () => {
 				resolve();
 			}
 
-			channel.generator
-				.addGenerator(check)
-				.addGenerator(test)
-				.restartOnAsyncError()
-				.run();
+			channel.generator.addGenerator(check).addGenerator(test).restartOnAsyncError().run();
 		});
 	});
 
@@ -613,9 +602,9 @@ describe("events", () => {
 		const hub = createHub();
 		const channel = hub.newChannel();
 
-		return new Promise(resolve => {
+		return new Promise<void>(resolve => {
 			channel.generator
-				.addGenerator(function*(this: number, defArg: string): IterableIterator<EventIterable> {
+				.addGenerator(function* (this: number, defArg: string): Generator<EventIterable> {
 					expect(this).toBe(2);
 					expect(defArg).toBe("asd");
 					resolve();

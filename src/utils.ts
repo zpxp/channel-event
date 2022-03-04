@@ -9,7 +9,7 @@ export class GeneratorUtils {
 		return val && typeof val === "object" && "done" in val && "value" in val;
 	}
 
-	static isIterableIterator(val: any): val is IterableIterator<EventIterable<any>> {
+	static isIterableIterator(val: any): val is Generator<EventIterable<any>> {
 		return (
 			val &&
 			typeof val === "object" &&

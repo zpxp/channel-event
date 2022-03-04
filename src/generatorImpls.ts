@@ -9,7 +9,7 @@ export const generatorImplements = {
 	 * @param data the string type or types to wait on
 	 * @param channel
 	 */
-	take: function(data: EventIterable<string | string[]>, channel: IChannel): Promise<any> {
+	take: function (data: EventIterable<string | string[]>, channel: IChannel): Promise<any> {
 		return new Promise((resolve, reject) => {
 			const unsub = channel.listen(data.value, result => {
 				unsub();
@@ -24,7 +24,7 @@ export const generatorImplements = {
 	 * @param data action type and data to send
 	 * @param channel
 	 */
-	put: function(data: EventIterable<{ type: string; data: any }>, channel: IChannel): Promise<any> {
+	put: function (data: EventIterable<{ type: string; data: any }>, channel: IChannel): Promise<any> {
 		return Promise.resolve(channel.send(data.value.type, data.value.data));
 	},
 
@@ -33,12 +33,12 @@ export const generatorImplements = {
 	 * @param data async func or generator
 	 * @param channel
 	 */
-	call: function<A extends any[]>(data: EventIterable<{ func: (...args: A) => any; args: A }>): Promise<any> {
+	call: function <A extends any[]>(data: EventIterable<{ func: (...args: A) => any; args: A }>): Promise<any> {
 		const result = data.value.func.apply(null, data.value.args);
 		return Promise.resolve(result);
 	},
 
-	fork: function<A extends any[]>(data: EventIterable<{ func: (...args: A) => any; args: A }>, channel: tChannel): Promise<any> {
+	fork: function <A extends any[]>(data: EventIterable<{ func: (...args: A) => any; args: A }>, channel: tChannel): Promise<any> {
 		let cancel: (reason: any) => void;
 		let cancelled = false;
 
@@ -61,19 +61,19 @@ export const generatorImplements = {
 		});
 	},
 
-	delay: function(data: EventIterable<number>): Promise<never> {
-		return new Promise(resolve => {
+	delay: function (data: EventIterable<number>): Promise<void> {
+		return new Promise<void>(resolve => {
 			setTimeout(() => {
 				resolve();
 			}, data.value);
 		});
 	},
 
-	takeLatest: function(
+	takeLatest: function (
 		data: EventIterable<{ type: string | string[]; func: (data: any) => void | IterableIterator<EventIterable> }>,
 		channel: IChannel
 	): Promise<any> {
-		channel.runGenerator(function*() {
+		channel.runGenerator(function* () {
 			let cancel = null;
 			while (true) {
 				const result = yield take(data.value.type);
@@ -88,11 +88,11 @@ export const generatorImplements = {
 		return Promise.resolve();
 	},
 
-	takeEvery: function(
+	takeEvery: function (
 		data: EventIterable<{ type: string | string[]; func: (data: any) => void | IterableIterator<EventIterable> }>,
 		channel: IChannel
 	): Promise<any> {
-		channel.runGenerator(function*() {
+		channel.runGenerator(function* () {
 			while (true) {
 				const result = yield take(data.value.type);
 				yield fork(data.value.func, result);
@@ -102,11 +102,11 @@ export const generatorImplements = {
 		return Promise.resolve();
 	},
 
-	takeLast: function(
+	takeLast: function (
 		data: EventIterable<{ type: string | string[]; func: (data: any) => void | IterableIterator<EventIterable> }>,
 		channel: IChannel
 	): Promise<any> {
-		channel.runGenerator(function*() {
+		channel.runGenerator(function* () {
 			while (true) {
 				const result = yield take(data.value.type);
 				// block until completion

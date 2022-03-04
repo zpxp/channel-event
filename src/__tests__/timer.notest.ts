@@ -1,4 +1,3 @@
-
 export class Timer {
 	private _start: Date;
 

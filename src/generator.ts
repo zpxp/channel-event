@@ -5,6 +5,11 @@ export interface EventIterable<T = any> {
 	value: T;
 }
 
+export interface EventFunction<T = any> {
+	function: string;
+	value: T;
+}
+
 /**
  * waits until the dispatch of a specified type then returns the data
  * @param type the string type or types to wait on

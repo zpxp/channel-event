@@ -115,7 +115,7 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 	}
 
 	checkSend(type: string, data: any) {
-		let rnts: Indexable = {};
+		const rnts: Indexable = {};
 		if (type in this.listens) {
 			for (let index = this.listens[type].length - 1; index >= 0; index--) {
 				const func = this.listens[type][index];
@@ -129,7 +129,7 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 	}
 
 	runGenerator(
-		generatorFunc: () => IterableIterator<EventIterable>,
+		generatorFunc: () => Generator<EventIterable>,
 		onCompletion?: (result?: any) => void,
 		onError?: (error: any) => void
 	): () => void {
@@ -138,7 +138,7 @@ export class _ChannelInternal<Actions extends { [type: string]: IChannelMessage<
 	}
 
 	/** Returns a cancel function */
-	runIterator(iter: IterableIterator<EventIterable>, onCompletion?: (result?: any) => void, onError?: (error: any) => void): () => void {
+	runIterator(iter: Generator<EventIterable>, onCompletion?: (result?: any) => void, onError?: (error: any) => void): () => void {
 		if (this.disposed) {
 			throw new Error("Channel disposed");
 		}

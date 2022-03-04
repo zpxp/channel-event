@@ -41,7 +41,7 @@ export interface IChannel<Actions extends { [type: string]: IChannelMessage<any>
 
 	/** true when this channel is disposed */
 	readonly isDisposed: boolean;
-	
+
 	/** The hub that this channel belongs to */
 	readonly hub: IHub;
 
@@ -51,10 +51,10 @@ export interface IChannel<Actions extends { [type: string]: IChannelMessage<any>
 	 * @see https://github.com/zpxp/channel-event/blob/v1/src/generator.ts
 	 * @see https://github.com/zpxp/channel-event/blob/v1/src/__tests__/events.ts#L102
 	 * @param generatorFunc
-	 * 
+	 *
 	 * @returns A cancel function
 	 */
-	runGenerator(generatorFunc: () => IterableIterator<EventIterable>): () => void;
+	runGenerator(generatorFunc: () => Generator<EventIterable, any, any>): () => void;
 
 	/**
 	 * Run a given generator function and call `onCompletion` when the function returns
@@ -64,7 +64,7 @@ export interface IChannel<Actions extends { [type: string]: IChannelMessage<any>
 	 * 
 	 * @returns A cancel function
 	 */
-	runGenerator(generatorFunc: () => IterableIterator<EventIterable>, onCompletion?: (result?: any) => void): () => void;
+	runGenerator(generatorFunc: () => Generator<EventIterable, any, any>, onCompletion?: (result?: any) => void): () => void;
 
 	/**
 	 * Cleanup any listeners and running generators
