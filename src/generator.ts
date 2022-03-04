@@ -1,6 +1,8 @@
 import { EventData } from "./types";
 
-export interface EventIterable<T = any> {
+export type EventIterable<T = any> = EventFunction<T> | Promise<T>
+
+export interface EventFunction<T = any> {
 	function: string;
 	value: T;
 }

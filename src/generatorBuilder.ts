@@ -176,7 +176,7 @@ function tryFork<T = any>(generator: () => Generator<EventIterable, T, any>, msT
 				callback(result);
 				return;
 			} catch (e) {
-				console.error("Generator Error:", e);
+				// console.error("Generator Error:", e);
 				if (isSyncError) {
 					throw e;
 				} else if (msTimeout && msTimeout > 0) {

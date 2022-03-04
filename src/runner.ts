@@ -119,8 +119,11 @@ export class IterRunner {
 			this.iterStack.pop();
 			return result.value;
 		} else {
+			if (result.value instanceof Promise) {
+				return result.value;
+			}
 			if (!result.value || !result.value.function) {
-				throw new Error("Must yield a 'Generator<EventIterable, any,any>' function or value");
+				throw new Error("Must yield a 'Generator<EventIterable, any, any>' function or Promise");
 			}
 
 			if (
@@ -128,7 +131,7 @@ export class IterRunner {
 				this.hub.generatorMiddlewares[result.value.function].length === 0
 			) {
 				throw new Error(
-					`'Generator<EventIterable, any,any>' function '${result.value.function}' does not exist. Add middleware to 'hub.addGeneratorMiddleware'.`
+					`'Generator<EventIterable, any, any>' function '${result.value.function}' does not exist. Add middleware to 'hub.addGeneratorMiddleware'.`
 				);
 			}
 
@@ -152,6 +155,10 @@ export class IterRunner {
 				const iter = this.iterStack[this.iterStack.length - 1];
 				try {
 					const nextYieldResult = iter.throw(err);
+					if (nextYieldResult.done) {
+						this.iterStack.pop();
+						return nextYieldResult.value;
+					}
 					if (
 						nextYieldResult &&
 						GeneratorUtils.isIteratorResult(nextYieldResult) &&
@@ -184,7 +191,10 @@ export class IterRunner {
 	 * @param index Current middleware index
 	 */
 	private processEventIterable(iterable: EventIterable, index: number): any | Promise<any> {
-		if (GeneratorUtils.isIterableIterator(iterable.value)) {
+		if (iterable instanceof Promise) {
+			// value is a promise. wait till completion
+			return iterable;
+		} else if (GeneratorUtils.isIterableIterator(iterable.value)) {
 			this.iterStack.push(iterable.value);
 			return this.next(iterable.value);
 		} else if (iterable.value instanceof Promise) {

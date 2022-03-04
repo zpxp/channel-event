@@ -1,11 +1,13 @@
 # channel-event
 
-A simple and highly extensible javascript event channel library that can run generator functions, which allows async data flows and simplifies cross component communication.
-Events are scoped to hub instances which means that the scale of the event channels can be controlled and event collisions are non existant. This means easy debugging.
+A simple and highly extensible javascript event channel and control flow library. It can run generator functions, which allows async data flows, simplifies cross component communication and hoists control
+flows to the parent scope. This allows creating highly modular and decoupled architectures.
+
+Events are scoped to hub instances which means that the scale of the event channels can be controlled and event collisions are non existent. This makes for easy debugging.
 
 ![Bundlephobia gzip + minified](https://badgen.net/bundlephobia/minzip/channel-event)
 
-Typescript typings are built in, however it will still work in vanila javascript 
+Typescript typings are built in, however it will still work in vanilla javascript 
 
 ### Installation
 
@@ -85,6 +87,12 @@ Call `dispose` when finished using
 channel.dispose();
 // or
 hub.dispose(); // calls dispose on every channel inside the hub
+```
+
+Promises can also be yielded and the function will block until their completion.
+
+```tsx
+const promResult = yield promiseObject;
 ```
 
 ### Event middleware

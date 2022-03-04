@@ -2,6 +2,7 @@ import { createHub, channelReturnSym } from "../hub";
 import { EventIterable, take, put, call, takeLatest, delay, fork, takeEvery, takeLast } from "../generator";
 import { Timer } from "./timer.notest";
 import { EventData } from "src/types";
+import { rejects } from "assert";
 
 describe("events", () => {
 	test("Should resolve", () => {
@@ -138,6 +139,43 @@ describe("events", () => {
 		});
 	});
 
+	test("generator yield promise", () => {
+		const hub = createHub();
+		const channel = hub.newChannel();
+
+		return new Promise<void>(resolve => {
+			channel.runGenerator(function* (): Generator<EventIterable> {
+				const res = yield new Promise<number>(resolve => {
+					setTimeout(() => {
+						resolve(1);
+					}, 1);
+				});
+				expect(res).toBe(1);
+				resolve();
+			});
+		});
+	});
+
+	test("generator yield promise 2", () => {
+		const hub = createHub();
+		const channel = hub.newChannel();
+
+		return new Promise<void>(resolve => {
+			channel.runGenerator(function* (): Generator<EventIterable> {
+				const res = yield new Promise<number>(resolve => {
+					setTimeout(() => {
+						resolve(1);
+					}, 1);
+				}).then(res => {
+					expect(res).toBe(1);
+					return 6;
+				});
+				expect(res).toBe(6);
+				resolve();
+			});
+		});
+	});
+
 	test("generator take", () => {
 		const hub = createHub();
 		const channel = hub.newChannel();
@@ -224,10 +262,10 @@ describe("events", () => {
 				const timer = new Timer();
 				timer.start();
 
-				yield delay(100);
+				yield delay(10);
 
 				const time = timer.stop();
-				expect(time >= 100 && time < 115).toBe(true);
+				expect(time >= 10 && time < 15).toBe(true);
 
 				resolve();
 			});
@@ -336,7 +374,7 @@ describe("events", () => {
 				if (recurse > 1) {
 					return yield call(testfunc, count, recurse - 1);
 				} else {
-					return yield call(testfuncprom, 100);
+					return yield testfuncprom(100);
 				}
 			}
 
@@ -610,6 +648,54 @@ describe("events", () => {
 					resolve();
 				})
 				.bindThis(2, "asd")
+				.run();
+		});
+	});
+
+	test("generator yield promise throw", () => {
+		const hub = createHub();
+		const channel = hub.newChannel();
+
+		return new Promise<void>(resolve => {
+			channel.runGenerator(function* (): Generator<EventIterable> {
+				const fn = jest.fn();
+				try {
+					const res = yield new Promise<number>((resolve, reject) => {
+						throw new Error("prom error");
+					});
+					expect(false).toBe(true);
+				} catch (e) {
+					fn(e);
+				}
+				expect(fn).toHaveBeenCalledTimes(1);
+				resolve();
+			});
+		});
+	});
+
+	test("generator yield promise throw with rtns", () => {
+		const hub = createHub();
+		const channel = hub.newChannel();
+
+		return new Promise<void>(resolve => {
+			channel.generator
+				.addGenerator(function* (): Generator<EventIterable> {
+					const fn = jest.fn();
+					try {
+						const res = yield new Promise<number>((resolve, reject) => {
+							throw new Error("prom error");
+						});
+						expect(false).toBe(true);
+					} catch (e) {
+						fn(e);
+					}
+					expect(fn).toHaveBeenCalledTimes(1);
+					return 5;
+				})
+				.addCompletionCallback(res => {
+					expect(res).toBe(5);
+					resolve();
+				})
 				.run();
 		});
 	});
