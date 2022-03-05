@@ -4,5 +4,5 @@ export { createHub, addGlobalGeneratorMiddleware } from "./hub";
 export type { IGeneratorBuilder } from "./generatorBuilder";
 export type { EventData, EventMiddleware, EventMiddlewareContext } from "./types";
 
-export type { EventIterable } from "./generator";
+export type { EventIterable, EventFunction } from "./generator";
 export { take, put, call, fork, delay, takeLatest, takeEvery, takeLast } from "./generator";
