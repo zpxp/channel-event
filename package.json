@@ -1,6 +1,6 @@
 {
 	"name": "channel-event",
-	"version": "3.3.2",
+	"version": "3.4.0",
 	"main": "lib/index.js",
 	"module": "lib/index.js",
 	"repository": "git@github.com:zpxp/channel-event.git",
